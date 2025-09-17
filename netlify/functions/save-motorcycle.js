@@ -1,7 +1,6 @@
 const { Client } = require('pg');
 
 exports.handler = async (event, context) => {
-  // Handle preflight CORS
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -33,9 +32,7 @@ exports.handler = async (event, context) => {
 
   try {
     await client.connect();
-    console.log('Database connected successfully');
     
-    // Create table if it doesn't exist
     await client.query(`
       CREATE TABLE IF NOT EXISTS motorcycles (
         id VARCHAR(255) PRIMARY KEY,
@@ -48,16 +45,10 @@ exports.handler = async (event, context) => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log('Table created/verified');
 
     const requestBody = JSON.parse(event.body);
-    console.log('Request body:', requestBody);
-
     const { id, make, model, class: bikeClass, number, variant } = requestBody;
 
-    console.log('Parsed data:', { id, make, model, bikeClass, number, variant });
-
-    // Insert or update motorcycle
     const result = await client.query(
       `INSERT INTO motorcycles (id, make, model, class, number, variant, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
@@ -67,7 +58,6 @@ exports.handler = async (event, context) => {
       [id, make, model, bikeClass, number, variant]
     );
 
-    console.log('Query result:', result.rows[0]);
     await client.end();
 
     return {
@@ -81,8 +71,23 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('Detailed error:', error);
+    console.error('Database error:', error);
     
     try {
       await client.end();
-    } catch (cl
+    } catch (closeError) {
+      console.error('Error closing client:', closeError);
+    }
+    
+    return {
+      statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ 
+        error: 'Database error', 
+        details: error.message
+      })
+    };
+  }
+};
