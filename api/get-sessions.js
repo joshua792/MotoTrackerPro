@@ -7,13 +7,13 @@ const client = new Client({
   }
 });
 
-exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'GET') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
+  // ... rest of code
+  return res.status(200).json({ motorcycles: result.rows });
+}
 
   try {
     await client.connect();
