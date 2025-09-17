@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moto Race Setup Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .bike-selector {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .bike-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .session-tabs {
+            display: flex;
+            background: #f1f3f4;
+            overflow-x: auto;
+        }
+
+        .session-tab {
+            padding: 15px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .session-tab:hover {
+            background: #e8eaed;
+        }
+
+        .session-tab.active {
+            background: white;
+            border-bottom-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .session-content {
+            padding: 30px;
+        }
+
+        .setup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .setup-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .setup-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .setup-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .setup-fields input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .notes-section {
+            margin-top: 20px;
+        }
+
+        .notes-section textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .feedback-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .feedback-section h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .feedback-section textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid #ffd93d;
+            border-radius: 5px;
+            background: white;
+        }
+
+        .data-display {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .bike-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .setup-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .session-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .session-tab {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏍️ Race Setup Tracker</h1>
+            <p>Track your motorcycle setup changes throughout race weekend</p>
+        </div>
+
+        <div class="bike-selector">
+            <div class="bike-info">
+                <div class="form-group">
+                    <label for="make">Make</label>
+                    <input type="text" id="make" placeholder="Yamaha, Honda, etc.">
+                </div>
+                <div class="form-group">
+                    <label for="model">Model</label>
+                    <input type="text" id="model" placeholder="R1, CBR1000RR, etc.">
+                </div>
+                <div class="form-group">
+                    <label for="class">Class</label>
+                    <input type="text" id="class" placeholder="Superbike, Supersport, etc.">
+                </div>
+                <div class="form-group">
+                    <label for="rider">Rider Number</label>
+                    <input type="text" id="rider" placeholder="69">
+                </div>
+                <div class="form-group">
+                    <label for="bike-variant">Bike</label>
+                    <select id="bike-variant">
+                        <option value="A">A Bike</option>
+                        <option value="B">B Bike</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="track">Track</label>
+                    <input type="text" id="track" placeholder="Laguna Seca, Daytona, etc.">
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="saveBikeInfo()">Save Bike Info</button>
+                <button class="btn btn-secondary" onclick="loadPreviousData()">Load Previous Visit Data</button>
+            </div>
+        </div>
+
+        <div class="session-tabs">
+            <button class="session-tab active" onclick="switchSession('practice1')">Practice 1</button>
+            <button class="session-tab" onclick="switchSession('qualifying1')">Qualifying 1</button>
+            <button class="session-tab" onclick="switchSession('qualifying2')">Qualifying 2</button>
+            <button class="session-tab" onclick="switchSession('race1')">Race 1</button>
+            <button class="session-tab" onclick="switchSession('warmup')">Warmup</button>
+            <button class="session-tab" onclick="switchSession('race2')">Race 2</button>
+        </div>
+
+        <div class="session-content">
+            <div class="setup-grid">
+                <div class="setup-section">
+                    <h3>🔧 Front Suspension</h3>
+                    <div class="setup-fields">
+                        <input type="text" id="front-spring" placeholder="Spring Rate">
+                        <input type="text" id="front-preload" placeholder="Preload">
+                        <input type="text" id="front-compression" placeholder="Compression">
+                        <input type="text" id="front-rebound" placeholder="Rebound">
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h3>🔧 Rear Suspension</h3>
+                    <div class="setup-fields">
+                        <input type="text" id="rear-spring" placeholder="Spring Rate">
+                        <input type="text" id="rear-preload" placeholder="Preload">
+                        <input type="text" id="rear-compression" placeholder="Compression">
+                        <input type="text" id="rear-rebound" placeholder="Rebound">
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h3>⚙️ Gearing</h3>
+                    <div class="setup-fields">
+                        <input type="text" id="front-sprocket" placeholder="Front Sprocket">
+                        <input type="text" id="rear-sprocket" placeholder="Rear Sprocket">
+                        <input type="text" id="swingarm-length" placeholder="Swingarm Length">
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h3>🏍️ Tires & Geometry</h3>
+                    <div class="setup-fields">
+                        <input type="text" id="front-tire" placeholder="Front Tire">
+                        <input type="text" id="rear-tire" placeholder="Rear Tire">
+                        <input type="text" id="front-pressure" placeholder="Front PSI">
+                        <input type="text" id="rear-pressure" placeholder="Rear PSI">
+                        <input type="text" id="rake" placeholder="Rake">
+                        <input type="text" id="trail" placeholder="Trail">
+                    </div>
+                </div>
+            </div>
+
+            <div class="notes-section">
+                <div class="form-group">
+                    <label for="notes">Setup Notes</label>
+                    <textarea id="notes" placeholder="Track conditions, setup changes, rider feedback..."></textarea>
+                </div>
+            </div>
+
+            <div class="feedback-section">
+                <h4>📝 Post-Session Feedback</h4>
+                <textarea id="feedback" placeholder="How did the bike feel? What needs to be changed for the next session?"></textarea>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="saveSession()">Save Session</button>
+                <button class="btn btn-primary" onclick="copyFromPrevious()">Copy from Previous Session</button>
+                <button class="btn btn-secondary" onclick="clearSession()">Clear All</button>
+                <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+            </div>
+
+            <div id="saved-data" class="data-display" style="display: none;">
+                <h4>✅ Session Saved Successfully!</h4>
+                <p>Data has been saved to browser storage and is ready for analysis.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSession = 'practice1';
+        let sessionData = {};
+        let bikeInfo = {};
+
+        // Session names for display
+        const sessionNames = {
+            'practice1': 'Practice 1',
+            'qualifying1': 'Qualifying 1',
+            'qualifying2': 'Qualifying 2',
+            'race1': 'Race 1',
+            'warmup': 'Warmup',
+            'race2': 'Race 2'
+        };
+
+        // Initialize the app
+        function initApp() {
+            loadBikeInfo();
+            loadSessionData();
+            updateDisplay();
+        }
+
+        // Switch between sessions
+        function switchSession(session) {
+            saveCurrentSession();
+            currentSession = session;
+            
+            // Update tab appearance
+            document.querySelectorAll('.session-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            loadSessionData();
+            updateDisplay();
+        }
+
+        // Save bike information
+        function saveBikeInfo() {
+            bikeInfo = {
+                make: document.getElementById('make').value,
+                model: document.getElementById('model').value,
+                class: document.getElementById('class').value,
+                rider: document.getElementById('rider').value,
+                variant: document.getElementById('bike-variant').value,
+                track: document.getElementById('track').value,
+                timestamp: new Date().toISOString()
+            };
+            
+            // In a real app, this would go to a database
+            // For now, we'll store in browser's local storage
+            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
+            allData.bikeInfo = bikeInfo;
+            localStorage.setItem('raceData', JSON.stringify(allData));
+            
+            showSaveConfirmation();
+        }
+
+        // Load bike information
+        function loadBikeInfo() {
+            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
+            if (allData.bikeInfo) {
+                bikeInfo = allData.bikeInfo;
+                document.getElementById('make').value = bikeInfo.make || '';
+                document.getElementById('model').value = bikeInfo.model || '';
+                document.getElementById('class').value = bikeInfo.class || '';
+                document.getElementById('rider').value = bikeInfo.rider || '';
+                document.getElementById('bike-variant').value = bikeInfo.variant || 'A';
+                document.getElementById('track').value = bikeInfo.track || '';
+            }
+        }
+
+        // Save current session data
+        function saveCurrentSession() {
+            const sessionKey = `${bikeInfo.make}_${bikeInfo.model}_${bikeInfo.variant}_${currentSession}`;
+            
+            sessionData[sessionKey] = {
+                // Suspension data
+                frontSpring: document.getElementById('front-spring').value,
+                frontPreload: document.getElementById('front-preload').value,
+                frontCompression: document.getElementById('front-compression').value,
+                frontRebound: document.getElementById('front-rebound').value,
+                rearSpring: document.getElementById('rear-spring').value,
+                rearPreload: document.getElementById('rear-preload').value,
+                rearCompression: document.getElementById('rear-compression').value,
+                rearRebound: document.getElementById('rear-rebound').value,
+                
+                // Gearing data
+                frontSprocket: document.getElementById('front-sprocket').value,
+                rearSprocket: document.getElementById('rear-sprocket').value,
+                swingarmLength: document.getElementById('swingarm-length').value,
+                
+                // Tire and geometry data
+                frontTire: document.getElementById('front-tire').value,
+                rearTire: document.getElementById('rear-tire').value,
+                frontPressure: document.getElementById('front-pressure').value,
+                rearPressure: document.getElementById('rear-pressure').value,
+                rake: document.getElementById('rake').value,
+                trail: document.getElementById('trail').value,
+                
+                // Notes and feedback
+                notes: document.getElementById('notes').value,
+                feedback: document.getElementById('feedback').value,
+                
+                // Metadata
+                timestamp: new Date().toISOString(),
+                session: currentSession,
+                track: bikeInfo.track
+            };
+        }
+
+        // Load session data
+        function loadSessionData() {
+            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
+            if (allData.sessions) {
+                sessionData = allData.sessions;
+            }
+            
+            const sessionKey = `${bikeInfo.make}_${bikeInfo.model}_${bikeInfo.variant}_${currentSession}`;
+            const data = sessionData[sessionKey];
+            
+            if (data) {
+                // Load suspension data
+                document.getElementById('front-spring').value = data.frontSpring || '';
+                document.getElementById('front-preload').value = data.frontPreload || '';
+                document.getElementById('front-compression').value = data.frontCompression || '';
+                document.getElementById('front-rebound').value = data.frontRebound || '';
+                document.getElementById('rear-spring').value = data.rearSpring || '';
+                document.getElementById('rear-preload').value = data.rearPreload || '';
+                document.getElementById('rear-compression').value = data.rearCompression || '';
+                document.getElementById('rear-rebound').value = data.rearRebound || '';
+                
+                // Load gearing data
+                document.getElementById('front-sprocket').value = data.frontSprocket || '';
+                document.getElementById('rear-sprocket').value = data.rearSprocket || '';
+                document.getElementById('swingarm-length').value = data.swingarmLength || '';
+                
+                // Load tire and geometry data
+                document.getElementById('front-tire').value = data.frontTire || '';
+                document.getElementById('rear-tire').value = data.rearTire || '';
+                document.getElementById('front-pressure').value = data.frontPressure || '';
+                document.getElementById('rear-pressure').value = data.rearPressure || '';
+                document.getElementById('rake').value = data.rake || '';
+                document.getElementById('trail').value = data.trail || '';
+                
+                // Load notes and feedback
+                document.getElementById('notes').value = data.notes || '';
+                document.getElementById('feedback').value = data.feedback || '';
+            } else {
+                clearAllFields();
+            }
+        }
+
+        // Save session
+        function saveSession() {
+            saveCurrentSession();
+            
+            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
+            allData.sessions = sessionData;
+            allData.bikeInfo = bikeInfo;
+            localStorage.setItem('raceData', JSON.stringify(allData));
+            
+            showSaveConfirmation();
+        }
+
+        // Copy from previous session
+        function copyFromPrevious() {
+            const sessions = ['practice1', 'qualifying1', 'qualifying2', 'race1', 'warmup', 'race2'];
+            const currentIndex = sessions.indexOf(currentSession);
+            
+            if (currentIndex > 0) {
+                const previousSession = sessions[currentIndex - 1];
+                const previousKey = `${bikeInfo.make}_${bikeInfo.model}_${bikeInfo.variant}_${previousSession}`;
+                const previousData = sessionData[previousKey];
+                
+                if (previousData) {
+                    // Copy all setup data but not notes/feedback
+                    document.getElementById('front-spring').value = previousData.frontSpring || '';
+                    document.getElementById('front-preload').value = previousData.frontPreload || '';
+                    document.getElementById('front-compression').value = previousData.frontCompression || '';
+                    document.getElementById('front-rebound').value = previousData.frontRebound || '';
+                    document.getElementById('rear-spring').value = previousData.rearSpring || '';
+                    document.getElementById('rear-preload').value = previousData.rearPreload || '';
+                    document.getElementById('rear-compression').value = previousData.rearCompression || '';
+                    document.getElementById('rear-rebound').value = previousData.rearRebound || '';
+                    document.getElementById('front-sprocket').value = previousData.frontSprocket || '';
+                    document.getElementById('rear-sprocket').value = previousData.rearSprocket || '';
+                    document.getElementById('swingarm-length').value = previousData.swingarmLength || '';
+                    document.getElementById('front-tire').value = previousData.frontTire || '';
+                    document.getElementById('rear-tire').value = previousData.rearTire || '';
+                    document.getElementById('front-pressure').value = previousData.frontPressure || '';
+                    document.getElementById('rear-pressure').value = previousData.rearPressure || '';
+                    document.getElementById('rake').value = previousData.rake || '';
+                    document.getElementById('trail').value = previousData.trail || '';
+                    
+                    alert(`Settings copied from ${sessionNames[previousSession]}!`);
+                } else {
+                    alert(`No data found for ${sessionNames[previousSession]}`);
+                }
+            } else {
+                alert('No previous session to copy from!');
+            }
+        }
+
+        // Clear session
+        function clearSession() {
+            if (confirm('Are you sure you want to clear all data for this session?')) {
+                clearAllFields();
+            }
+        }
+
+        // Clear all form fields
+        function clearAllFields() {
+            document.querySelectorAll('input[type="text"], textarea').forEach(field => {
+                if (!['make', 'model', 'class', 'rider', 'track'].includes(field.id)) {
+                    field.value = '';
+                }
+            });
+        }
+
+        // Load previous track data
+        function loadPreviousData() {
+            // In a real app, this would query the database for previous visits to this track
+            alert('This feature will load data from your last visit to this track once we add database connectivity!');
+        }
+
+        // Export data
+        function exportData() {
+            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
+            const dataStr = JSON.stringify(allData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `race_data_${bikeInfo.make}_${bikeInfo.model}_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        // Show save confirmation
+        function showSaveConfirmation() {
+            const element = document.getElementById('saved-data');
+            element.style.display = 'block';
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 3000);
+        }
+
+        // Update display
+        function updateDisplay() {
+            // This would update any dynamic content based on current state
+        }
+
+        // Initialize app when page loads
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
