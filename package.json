@@ -1,1 +1,12 @@
-
+{
+  "name": "moto-race-tracker",
+  "version": "1.0.0",
+  "description": "Motorcycle race setup tracking application",
+  "main": "index.html",
+  "dependencies": {
+    "pg": "^8.11.3"
+  },
+  "scripts": {
+    "build": "echo 'No build step required'"
+  }
+}
