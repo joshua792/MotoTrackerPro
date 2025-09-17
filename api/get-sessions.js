@@ -1,24 +1,21 @@
-const { Client } = require('pg');
-
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+import { Client } from 'pg';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  // ... rest of code
-  return res.status(200).json({ motorcycles: result.rows });
-}
+
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
 
   try {
     await client.connect();
     
-    const { event_id, motorcycle_id } = event.queryStringParameters || {};
+    const { event_id, motorcycle_id } = req.query;
     
     let query = 'SELECT * FROM sessions ORDER BY updated_at DESC';
     let params = [];
@@ -34,23 +31,15 @@ export default async function handler(req, res) {
     const result = await client.query(query, params);
     await client.end();
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS'
-      },
-      body: JSON.stringify({ sessions: result.rows })
-    };
+    return res.status(200).json({ sessions: result.rows });
 
   } catch (error) {
     console.error('Database error:', error);
-    await client.end();
-    
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Database error', details: error.message })
-    };
+    try {
+      await client.end();
+    } catch (closeError) {
+      console.error('Error closing client:', closeError);
+    }
+    return res.status(500).json({ error: 'Database error', details: error.message });
   }
-};
+}
