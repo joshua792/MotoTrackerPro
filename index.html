@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3a5f 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -28,7 +28,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            background: linear-gradient(135deg, #2c5aa0, #1e3a5f);
             color: white;
             padding: 30px;
             text-align: center;
@@ -39,22 +39,68 @@
             margin-bottom: 10px;
         }
 
-        .bike-selector {
+        .top-controls {
             background: #f8f9fa;
             padding: 20px;
             border-bottom: 2px solid #e9ecef;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
         }
 
-        .bike-info {
+        .event-section, .motorcycle-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c5aa0;
+        }
+
+        .motorcycle-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .motorcycle-card {
+            padding: 10px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .motorcycle-card:hover {
+            border-color: #2c5aa0;
+            transform: translateY(-2px);
+        }
+
+        .motorcycle-card.active {
+            background: #2c5aa0;
+            color: white;
+            border-color: #2c5aa0;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
+            margin-bottom: 15px;
         }
 
         .form-group label {
@@ -72,7 +118,7 @@
         }
 
         .form-group input:focus, .form-group select:focus {
-            border-color: #667eea;
+            border-color: #2c5aa0;
             outline: none;
         }
 
@@ -99,8 +145,8 @@
 
         .session-tab.active {
             background: white;
-            border-bottom-color: #ff6b6b;
-            color: #ff6b6b;
+            border-bottom-color: #2c5aa0;
+            color: #2c5aa0;
         }
 
         .session-content {
@@ -118,7 +164,7 @@
             background: #f8f9fa;
             padding: 20px;
             border-radius: 10px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #2c5aa0;
         }
 
         .setup-section h3 {
@@ -172,13 +218,13 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #2c5aa0, #1e3a5f);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px rgba(44, 90, 160, 0.3);
         }
 
         .btn-secondary {
@@ -187,7 +233,7 @@
         }
 
         .btn-secondary:hover {
-            background: #5a6268;
+            background: #545b62;
         }
 
         .btn-success {
@@ -197,6 +243,11 @@
 
         .btn-success:hover {
             background: #218838;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 12px;
         }
 
         .feedback-section {
@@ -229,13 +280,67 @@
             border-left: 4px solid #28a745;
         }
 
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2c5aa0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: -10px;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #2c5aa0;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.8em;
             }
             
-            .bike-info {
+            .top-controls {
                 grid-template-columns: 1fr;
+                gap: 20px;
             }
             
             .setup-grid {
@@ -250,127 +355,196 @@
                 flex: 1;
                 min-width: 120px;
             }
+
+            .motorcycle-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏍️ Race Setup Tracker</h1>
+            <h1>Race Setup Tracker</h1>
             <p>Track your motorcycle setup changes throughout race weekend</p>
         </div>
 
-        <div class="bike-selector">
-            <div class="bike-info">
-                <div class="form-group">
-                    <label for="make">Make</label>
-                    <input type="text" id="make" placeholder="Yamaha, Honda, etc.">
+        <div class="top-controls">
+            <div class="event-section">
+                <div class="section-header">
+                    <span class="section-title">📅 Event</span>
                 </div>
                 <div class="form-group">
-                    <label for="model">Model</label>
-                    <input type="text" id="model" placeholder="R1, CBR1000RR, etc.">
-                </div>
-                <div class="form-group">
-                    <label for="class">Class</label>
-                    <input type="text" id="class" placeholder="Superbike, Supersport, etc.">
-                </div>
-                <div class="form-group">
-                    <label for="rider">Rider Number</label>
-                    <input type="text" id="rider" placeholder="69">
-                </div>
-                <div class="form-group">
-                    <label for="bike-variant">Bike</label>
-                    <select id="bike-variant">
-                        <option value="A">A Bike</option>
-                        <option value="B">B Bike</option>
+                    <label for="event-select">Select Event</label>
+                    <select id="event-select">
+                        <option value="">Select an event...</option>
+                        <option value="daytona-mar7">Mar 7 - Daytona Beach, FL</option>
+                        <option value="cota-mar28">Mar 28 - Austin, TX (COTA)</option>
+                        <option value="barber-apr4">Apr 4 - Birmingham, AL (Barber)</option>
+                        <option value="roadatlanta-may2">May 2 - Braselton, GA (Road Atlanta)</option>
+                        <option value="roadamerica-may30">May 30 - Elkhart Lake, WI (Road America)</option>
+                        <option value="ridge-jun28">Jun 28 - Shelton, WA (The Ridge)</option>
+                        <option value="laguna-jul12">Jul 12 - Monterey, CA (Laguna Seca)</option>
+                        <option value="midohio-jul25">Jul 25 - Lexington, OH (Mid-Ohio)</option>
+                        <option value="vir-aug1">Aug 1 - Danville, VA (VIR)</option>
+                        <option value="midohio2-aug15">Aug 15 - Lexington, OH (Mid-Ohio)</option>
+                        <option value="cota2-sep12">Sep 12 - Austin, TX (COTA)</option>
+                        <option value="njmp-sep26">Sep 26 - Millville, NJ (NJMP)</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="track">Track</label>
-                    <input type="text" id="track" placeholder="Laguna Seca, Daytona, etc.">
-                </div>
             </div>
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="saveBikeInfo()">Save Bike Info</button>
-                <button class="btn btn-secondary" onclick="loadPreviousData()">Load Previous Visit Data</button>
+
+            <div class="motorcycle-section">
+                <div class="section-header">
+                    <span class="section-title">🏍️ Motorcycles</span>
+                    <button class="btn btn-primary btn-small" onclick="showAddMotorcycleModal()">+ Add Motorcycle</button>
+                </div>
+                <div id="motorcycle-list" class="motorcycle-grid">
+                    <div class="empty-state">
+                        <h3>No motorcycles added</h3>
+                        <p>Click "Add Motorcycle" to get started</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="session-tabs">
-            <button class="session-tab active" onclick="switchSession('practice1')">Practice 1</button>
-            <button class="session-tab" onclick="switchSession('qualifying1')">Qualifying 1</button>
-            <button class="session-tab" onclick="switchSession('qualifying2')">Qualifying 2</button>
-            <button class="session-tab" onclick="switchSession('race1')">Race 1</button>
-            <button class="session-tab" onclick="switchSession('warmup')">Warmup</button>
-            <button class="session-tab" onclick="switchSession('race2')">Race 2</button>
+        <div id="main-content" style="display: none;">
+            <div class="session-tabs">
+                <button class="session-tab active" onclick="switchSession('practice1')">Practice 1</button>
+                <button class="session-tab" onclick="switchSession('qualifying1')">Qualifying 1</button>
+                <button class="session-tab" onclick="switchSession('qualifying2')">Qualifying 2</button>
+                <button class="session-tab" onclick="switchSession('race1')">Race 1</button>
+                <button class="session-tab" onclick="switchSession('warmup')">Warmup</button>
+                <button class="session-tab" onclick="switchSession('race2')">Race 2</button>
+            </div>
+
+            <div class="session-content">
+                <div class="setup-grid">
+                    <div class="setup-section">
+                        <h3>🔧 Front Suspension</h3>
+                        <div class="setup-fields">
+                            <input type="text" id="front-spring" placeholder="Spring Rate">
+                            <input type="text" id="front-preload" placeholder="Preload">
+                            <input type="text" id="front-compression" placeholder="Compression">
+                            <input type="text" id="front-rebound" placeholder="Rebound">
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <h3>🔧 Rear Suspension</h3>
+                        <div class="setup-fields">
+                            <input type="text" id="rear-spring" placeholder="Spring Rate">
+                            <input type="text" id="rear-preload" placeholder="Preload">
+                            <input type="text" id="rear-compression" placeholder="Compression">
+                            <input type="text" id="rear-rebound" placeholder="Rebound">
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <h3>⚙️ Gearing</h3>
+                        <div class="setup-fields">
+                            <input type="text" id="front-sprocket" placeholder="Front Sprocket">
+                            <input type="text" id="rear-sprocket" placeholder="Rear Sprocket">
+                            <input type="text" id="swingarm-length" placeholder="Swingarm Length">
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <h3>🏍️ Tires & Geometry</h3>
+                        <div class="setup-fields">
+                            <input type="text" id="front-tire" placeholder="Front Tire">
+                            <input type="text" id="rear-tire" placeholder="Rear Tire">
+                            <input type="text" id="front-pressure" placeholder="Front PSI">
+                            <input type="text" id="rear-pressure" placeholder="Rear PSI">
+                            <input type="text" id="rake" placeholder="Rake">
+                            <input type="text" id="trail" placeholder="Trail">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notes-section">
+                    <div class="form-group">
+                        <label for="notes">Setup Notes</label>
+                        <textarea id="notes" placeholder="Track conditions, setup changes, rider feedback..."></textarea>
+                    </div>
+                </div>
+
+                <div class="feedback-section">
+                    <h4>📝 Post-Session Feedback</h4>
+                    <textarea id="feedback" placeholder="How did the bike feel? What needs to be changed for the next session?"></textarea>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="saveSession()">Save Session</button>
+                    <button class="btn btn-primary" onclick="copyFromPrevious()">Copy from Previous Session</button>
+                    <button class="btn btn-secondary" onclick="clearSession()">Clear All</button>
+                    <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+                </div>
+
+                <div id="saved-data" class="data-display" style="display: none;">
+                    <h4>✅ Session Saved Successfully!</h4>
+                    <p>Data has been saved to browser storage and is ready for analysis.</p>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="session-content">
-            <div class="setup-grid">
-                <div class="setup-section">
-                    <h3>🔧 Front Suspension</h3>
-                    <div class="setup-fields">
-                        <input type="text" id="front-spring" placeholder="Spring Rate">
-                        <input type="text" id="front-preload" placeholder="Preload">
-                        <input type="text" id="front-compression" placeholder="Compression">
-                        <input type="text" id="front-rebound" placeholder="Rebound">
-                    </div>
-                </div>
-
-                <div class="setup-section">
-                    <h3>🔧 Rear Suspension</h3>
-                    <div class="setup-fields">
-                        <input type="text" id="rear-spring" placeholder="Spring Rate">
-                        <input type="text" id="rear-preload" placeholder="Preload">
-                        <input type="text" id="rear-compression" placeholder="Compression">
-                        <input type="text" id="rear-rebound" placeholder="Rebound">
-                    </div>
-                </div>
-
-                <div class="setup-section">
-                    <h3>⚙️ Gearing</h3>
-                    <div class="setup-fields">
-                        <input type="text" id="front-sprocket" placeholder="Front Sprocket">
-                        <input type="text" id="rear-sprocket" placeholder="Rear Sprocket">
-                        <input type="text" id="swingarm-length" placeholder="Swingarm Length">
-                    </div>
-                </div>
-
-                <div class="setup-section">
-                    <h3>🏍️ Tires & Geometry</h3>
-                    <div class="setup-fields">
-                        <input type="text" id="front-tire" placeholder="Front Tire">
-                        <input type="text" id="rear-tire" placeholder="Rear Tire">
-                        <input type="text" id="front-pressure" placeholder="Front PSI">
-                        <input type="text" id="rear-pressure" placeholder="Rear PSI">
-                        <input type="text" id="rake" placeholder="Rake">
-                        <input type="text" id="trail" placeholder="Trail">
-                    </div>
-                </div>
+    <!-- Add Motorcycle Modal -->
+    <div id="motorcycle-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddMotorcycleModal()">&times;</span>
+            <div class="modal-header">Add New Motorcycle</div>
+            
+            <div class="form-group">
+                <label for="new-make">Make</label>
+                <select id="new-make">
+                    <option value="">Select Make...</option>
+                    <option value="Yamaha">Yamaha</option>
+                    <option value="Honda">Honda</option>
+                    <option value="Kawasaki">Kawasaki</option>
+                    <option value="Suzuki">Suzuki</option>
+                    <option value="Ducati">Ducati</option>
+                    <option value="BMW">BMW</option>
+                    <option value="Aprilia">Aprilia</option>
+                    <option value="KTM">KTM</option>
+                    <option value="Kramer">Kramer</option>
+                </select>
             </div>
-
-            <div class="notes-section">
-                <div class="form-group">
-                    <label for="notes">Setup Notes</label>
-                    <textarea id="notes" placeholder="Track conditions, setup changes, rider feedback..."></textarea>
-                </div>
+            
+            <div class="form-group">
+                <label for="new-model">Model</label>
+                <input type="text" id="new-model" placeholder="R1, CBR1000RR, ZX-10R, etc.">
             </div>
-
-            <div class="feedback-section">
-                <h4>📝 Post-Session Feedback</h4>
-                <textarea id="feedback" placeholder="How did the bike feel? What needs to be changed for the next session?"></textarea>
+            
+            <div class="form-group">
+                <label for="new-class">Class</label>
+                <select id="new-class">
+                    <option value="">Select Class...</option>
+                    <option value="Superbike">Superbike</option>
+                    <option value="Stock 1000">Stock 1000</option>
+                    <option value="Supersport">Supersport</option>
+                    <option value="Twins Cup">Twins Cup</option>
+                    <option value="Talent Cup">Talent Cup</option>
+                    <option value="Mini Cup">Mini Cup</option>
+                </select>
             </div>
-
+            
+            <div class="form-group">
+                <label for="new-number">Rider Number</label>
+                <input type="text" id="new-number" placeholder="69">
+            </div>
+            
+            <div class="form-group">
+                <label for="new-variant">Bike</label>
+                <select id="new-variant">
+                    <option value="A">A Bike</option>
+                    <option value="B">B Bike</option>
+                </select>
+            </div>
+            
             <div class="action-buttons">
-                <button class="btn btn-success" onclick="saveSession()">Save Session</button>
-                <button class="btn btn-primary" onclick="copyFromPrevious()">Copy from Previous Session</button>
-                <button class="btn btn-secondary" onclick="clearSession()">Clear All</button>
-                <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
-            </div>
-
-            <div id="saved-data" class="data-display" style="display: none;">
-                <h4>✅ Session Saved Successfully!</h4>
-                <p>Data has been saved to browser storage and is ready for analysis.</p>
+                <button class="btn btn-primary" onclick="addMotorcycle()">Add Motorcycle</button>
+                <button class="btn btn-secondary" onclick="closeAddMotorcycleModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -378,7 +552,9 @@
     <script>
         let currentSession = 'practice1';
         let sessionData = {};
-        let bikeInfo = {};
+        let motorcycles = [];
+        let currentMotorcycle = null;
+        let currentEvent = null;
 
         // Session names for display
         const sessionNames = {
@@ -390,15 +566,260 @@
             'race2': 'Race 2'
         };
 
+        // API helper functions
+        async function apiCall(endpoint, options = {}) {
+            const response = await fetch(`/.netlify/functions/${endpoint}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API call failed: ${response.statusText}`);
+            }
+            
+            return response.json();
+        }
+
         // Initialize the app
-        function initApp() {
-            loadBikeInfo();
-            loadSessionData();
+        async function initApp() {
+            await loadMotorcycles();
+            await loadSessionData();
             updateDisplay();
+            
+            // Event change handler
+            document.getElementById('event-select').addEventListener('change', checkShowMainContent);
+        }
+
+        // Show add motorcycle modal
+        function showAddMotorcycleModal() {
+            document.getElementById('motorcycle-modal').style.display = 'block';
+        }
+
+        // Close add motorcycle modal
+        function closeAddMotorcycleModal() {
+            document.getElementById('motorcycle-modal').style.display = 'none';
+            document.getElementById('motorcycle-modal').removeAttribute('data-editing-id');
+            
+            // Reset modal to add mode
+            document.querySelector('.modal-header').textContent = 'Add New Motorcycle';
+            document.querySelector('#motorcycle-modal .btn-primary').textContent = 'Add Motorcycle';
+            document.querySelector('#motorcycle-modal .btn-primary').setAttribute('onclick', 'addMotorcycle()');
+            
+            clearModalFields();
+        }
+
+        // Clear modal fields
+        function clearModalFields() {
+            document.getElementById('new-make').value = '';
+            document.getElementById('new-model').value = '';
+            document.getElementById('new-class').value = '';
+            document.getElementById('new-number').value = '';
+            document.getElementById('new-variant').value = 'A';
+        }
+
+        // Add motorcycle
+        async function addMotorcycle() {
+            const make = document.getElementById('new-make').value;
+            const model = document.getElementById('new-model').value;
+            const bikeClass = document.getElementById('new-class').value;
+            const number = document.getElementById('new-number').value;
+            const variant = document.getElementById('new-variant').value;
+
+            if (!make || !model || !bikeClass || !number) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const motorcycle = {
+                id: Date.now().toString(),
+                make: make,
+                model: model,
+                class: bikeClass,
+                number: number,
+                variant: variant
+            };
+
+            try {
+                await apiCall('save-motorcycle', {
+                    method: 'POST',
+                    body: JSON.stringify(motorcycle)
+                });
+
+                motorcycles.push(motorcycle);
+                updateMotorcycleDisplay();
+                closeAddMotorcycleModal();
+            } catch (error) {
+                console.error('Error saving motorcycle:', error);
+                alert('Error saving motorcycle. Please try again.');
+            }
+        }
+
+        // Select motorcycle (for internal use)
+        function selectMotorcycleInternal(motorcycleId) {
+            currentMotorcycle = motorcycles.find(m => m.id === motorcycleId);
+            updateMotorcycleDisplay();
+            checkShowMainContent();
+        }
+
+        // Handle motorcycle card clicks
+        function handleMotorcycleClick(motorcycleId) {
+            // If this motorcycle is already selected, open for editing
+            if (currentMotorcycle && currentMotorcycle.id === motorcycleId) {
+                editMotorcycle(motorcycleId);
+            } else {
+                // If no motorcycle selected or different motorcycle, select this one
+                selectMotorcycleInternal(motorcycleId);
+            }
+        }
+
+        // Edit motorcycle (opens modal)
+        function editMotorcycle(motorcycleId) {
+            const motorcycle = motorcycles.find(m => m.id === motorcycleId);
+            if (!motorcycle) return;
+
+            // Populate modal with existing data
+            document.getElementById('new-make').value = motorcycle.make;
+            document.getElementById('new-model').value = motorcycle.model;
+            document.getElementById('new-class').value = motorcycle.class;
+            document.getElementById('new-number').value = motorcycle.number;
+            document.getElementById('new-variant').value = motorcycle.variant;
+
+            // Store the ID for updating
+            document.getElementById('motorcycle-modal').setAttribute('data-editing-id', motorcycleId);
+            
+            // Change modal title and button text
+            document.querySelector('.modal-header').textContent = 'Edit Motorcycle';
+            document.querySelector('#motorcycle-modal .btn-primary').textContent = 'Update Motorcycle';
+            document.querySelector('#motorcycle-modal .btn-primary').setAttribute('onclick', 'updateMotorcycle()');
+
+            document.getElementById('motorcycle-modal').style.display = 'block';
+        }
+
+        // Update motorcycle
+        async function updateMotorcycle() {
+            const motorcycleId = document.getElementById('motorcycle-modal').getAttribute('data-editing-id');
+            const make = document.getElementById('new-make').value;
+            const model = document.getElementById('new-model').value;
+            const bikeClass = document.getElementById('new-class').value;
+            const number = document.getElementById('new-number').value;
+            const variant = document.getElementById('new-variant').value;
+
+            if (!make || !model || !bikeClass || !number) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const updatedMotorcycle = {
+                id: motorcycleId,
+                make: make,
+                model: model,
+                class: bikeClass,
+                number: number,
+                variant: variant
+            };
+
+            try {
+                await apiCall('save-motorcycle', {
+                    method: 'POST',
+                    body: JSON.stringify(updatedMotorcycle)
+                });
+
+                const motorcycleIndex = motorcycles.findIndex(m => m.id === motorcycleId);
+                if (motorcycleIndex !== -1) {
+                    motorcycles[motorcycleIndex] = updatedMotorcycle;
+
+                    // Update current motorcycle if it's the one being edited
+                    if (currentMotorcycle && currentMotorcycle.id === motorcycleId) {
+                        currentMotorcycle = updatedMotorcycle;
+                    }
+
+                    updateMotorcycleDisplay();
+                    closeAddMotorcycleModal();
+                }
+            } catch (error) {
+                console.error('Error updating motorcycle:', error);
+                alert('Error updating motorcycle. Please try again.');
+            }
+        }
+
+        // Delete motorcycle
+        async function deleteMotorcycle(motorcycleId) {
+            if (confirm('Are you sure you want to delete this motorcycle? This will also delete all associated session data.')) {
+                try {
+                    await apiCall(`delete-motorcycle?id=${motorcycleId}`, {
+                        method: 'DELETE'
+                    });
+
+                    motorcycles = motorcycles.filter(m => m.id !== motorcycleId);
+                    if (currentMotorcycle && currentMotorcycle.id === motorcycleId) {
+                        currentMotorcycle = null;
+                        document.getElementById('main-content').style.display = 'none';
+                    }
+                    updateMotorcycleDisplay();
+                } catch (error) {
+                    console.error('Error deleting motorcycle:', error);
+                    alert('Error deleting motorcycle. Please try again.');
+                }
+            }
+        }
+
+        // Load motorcycles from database
+        async function loadMotorcycles() {
+            try {
+                const response = await apiCall('get-motorcycles');
+                motorcycles = response.motorcycles || [];
+                updateMotorcycleDisplay();
+            } catch (error) {
+                console.error('Error loading motorcycles:', error);
+                // Fall back to empty array if database fails
+                motorcycles = [];
+                updateMotorcycleDisplay();
+            }
+        }
+
+        // Update motorcycle display
+        function updateMotorcycleDisplay() {
+            const container = document.getElementById('motorcycle-list');
+            
+            if (motorcycles.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No motorcycles added</h3>
+                        <p>Click "Add Motorcycle" to get started</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = motorcycles.map(moto => `
+                    <div class="motorcycle-card ${currentMotorcycle && currentMotorcycle.id === moto.id ? 'active' : ''}" 
+                         onclick="handleMotorcycleClick('${moto.id}')"
+                         ondblclick="handleMotorcycleDoubleClick('${moto.id}')">
+                        <div style="font-weight: 600;">#${moto.number} ${moto.variant}</div>
+                        <div>${moto.make} ${moto.model}</div>
+                        <div style="font-size: 10px; color: #666;">${moto.class}</div>
+                        <button onclick="event.stopPropagation(); deleteMotorcycle('${moto.id}')" 
+                                style="margin-top: 5px; background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; cursor: pointer;">Delete</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Check if main content should be shown
+        async function checkShowMainContent() {
+            currentEvent = document.getElementById('event-select').value;
+            
+            if (currentMotorcycle && currentEvent) {
+                document.getElementById('main-content').style.display = 'block';
+                await loadSessionData();
+            } else {
+                document.getElementById('main-content').style.display = 'none';
+            }
         }
 
         // Switch between sessions
-        function switchSession(session) {
+        async function switchSession(session) {
             saveCurrentSession();
             currentSession = session;
             
@@ -408,48 +829,15 @@
             });
             event.target.classList.add('active');
             
-            loadSessionData();
+            loadCurrentSessionFromData();
             updateDisplay();
-        }
-
-        // Save bike information
-        function saveBikeInfo() {
-            bikeInfo = {
-                make: document.getElementById('make').value,
-                model: document.getElementById('model').value,
-                class: document.getElementById('class').value,
-                rider: document.getElementById('rider').value,
-                variant: document.getElementById('bike-variant').value,
-                track: document.getElementById('track').value,
-                timestamp: new Date().toISOString()
-            };
-            
-            // In a real app, this would go to a database
-            // For now, we'll store in browser's local storage
-            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
-            allData.bikeInfo = bikeInfo;
-            localStorage.setItem('raceData', JSON.stringify(allData));
-            
-            showSaveConfirmation();
-        }
-
-        // Load bike information
-        function loadBikeInfo() {
-            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
-            if (allData.bikeInfo) {
-                bikeInfo = allData.bikeInfo;
-                document.getElementById('make').value = bikeInfo.make || '';
-                document.getElementById('model').value = bikeInfo.model || '';
-                document.getElementById('class').value = bikeInfo.class || '';
-                document.getElementById('rider').value = bikeInfo.rider || '';
-                document.getElementById('bike-variant').value = bikeInfo.variant || 'A';
-                document.getElementById('track').value = bikeInfo.track || '';
-            }
         }
 
         // Save current session data
         function saveCurrentSession() {
-            const sessionKey = `${bikeInfo.make}_${bikeInfo.model}_${bikeInfo.variant}_${currentSession}`;
+            if (!currentMotorcycle || !currentEvent) return;
+            
+            const sessionKey = `${currentEvent}_${currentMotorcycle.id}_${currentSession}`;
             
             sessionData[sessionKey] = {
                 // Suspension data
@@ -482,18 +870,61 @@
                 // Metadata
                 timestamp: new Date().toISOString(),
                 session: currentSession,
-                track: bikeInfo.track
+                event: currentEvent,
+                motorcycle: currentMotorcycle
             };
         }
 
-        // Load session data
-        function loadSessionData() {
-            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
-            if (allData.sessions) {
-                sessionData = allData.sessions;
-            }
+        // Load session data from database
+        async function loadSessionData() {
+            if (!currentMotorcycle || !currentEvent) return;
             
-            const sessionKey = `${bikeInfo.make}_${bikeInfo.model}_${bikeInfo.variant}_${currentSession}`;
+            try {
+                const response = await apiCall(`get-sessions?event_id=${currentEvent}&motorcycle_id=${currentMotorcycle.id}`);
+                const sessions = response.sessions || [];
+                
+                // Convert database format back to our sessionData format
+                sessionData = {};
+                sessions.forEach(session => {
+                    const sessionKey = `${session.event_id}_${session.motorcycle_id}_${session.session_type}`;
+                    sessionData[sessionKey] = {
+                        frontSpring: session.front_spring,
+                        frontPreload: session.front_preload,
+                        frontCompression: session.front_compression,
+                        frontRebound: session.front_rebound,
+                        rearSpring: session.rear_spring,
+                        rearPreload: session.rear_preload,
+                        rearCompression: session.rear_compression,
+                        rearRebound: session.rear_rebound,
+                        frontSprocket: session.front_sprocket,
+                        rearSprocket: session.rear_sprocket,
+                        swingarmLength: session.swingarm_length,
+                        frontTire: session.front_tire,
+                        rearTire: session.rear_tire,
+                        frontPressure: session.front_pressure,
+                        rearPressure: session.rear_pressure,
+                        rake: session.rake,
+                        trail: session.trail,
+                        notes: session.notes,
+                        feedback: session.feedback,
+                        timestamp: session.updated_at,
+                        session: session.session_type,
+                        event: session.event_id,
+                        motorcycle: currentMotorcycle
+                    };
+                });
+                
+                loadCurrentSessionFromData();
+            } catch (error) {
+                console.error('Error loading session data:', error);
+                // Clear form if database fails
+                clearAllFields();
+            }
+        }
+
+        // Load current session from sessionData
+        function loadCurrentSessionFromData() {
+            const sessionKey = `${currentEvent}_${currentMotorcycle.id}_${currentSession}`;
             const data = sessionData[sessionKey];
             
             if (data) {
@@ -528,16 +959,34 @@
             }
         }
 
-        // Save session
-        function saveSession() {
+        // Save session to database
+        async function saveSession() {
             saveCurrentSession();
             
-            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
-            allData.sessions = sessionData;
-            allData.bikeInfo = bikeInfo;
-            localStorage.setItem('raceData', JSON.stringify(allData));
-            
-            showSaveConfirmation();
+            if (!currentMotorcycle || !currentEvent) {
+                alert('Please select both an event and motorcycle before saving.');
+                return;
+            }
+
+            const sessionKey = `${currentEvent}_${currentMotorcycle.id}_${currentSession}`;
+            const sessionDataToSave = sessionData[sessionKey];
+
+            if (!sessionDataToSave) {
+                alert('No session data to save.');
+                return;
+            }
+
+            try {
+                await apiCall('save-session', {
+                    method: 'POST',
+                    body: JSON.stringify(sessionDataToSave)
+                });
+
+                showSaveConfirmation();
+            } catch (error) {
+                console.error('Error saving session:', error);
+                alert('Error saving session. Please try again.');
+            }
         }
 
         // Copy from previous session
@@ -547,7 +996,7 @@
             
             if (currentIndex > 0) {
                 const previousSession = sessions[currentIndex - 1];
-                const previousKey = `${bikeInfo.make}_${bikeInfo.model}_${bikeInfo.variant}_${previousSession}`;
+                const previousKey = `${currentEvent}_${currentMotorcycle.id}_${previousSession}`;
                 const previousData = sessionData[previousKey];
                 
                 if (previousData) {
@@ -589,28 +1038,37 @@
         // Clear all form fields
         function clearAllFields() {
             document.querySelectorAll('input[type="text"], textarea').forEach(field => {
-                if (!['make', 'model', 'class', 'rider', 'track'].includes(field.id)) {
+                if (!['new-make', 'new-model', 'new-class', 'new-number'].includes(field.id)) {
                     field.value = '';
                 }
             });
         }
 
-        // Load previous track data
-        function loadPreviousData() {
-            // In a real app, this would query the database for previous visits to this track
-            alert('This feature will load data from your last visit to this track once we add database connectivity!');
-        }
-
         // Export data
-        function exportData() {
-            const allData = JSON.parse(localStorage.getItem('raceData') || '{}');
-            const dataStr = JSON.stringify(allData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = `race_data_${bikeInfo.make}_${bikeInfo.model}_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
+        async function exportData() {
+            try {
+                const [motorcyclesResponse, sessionsResponse] = await Promise.all([
+                    apiCall('get-motorcycles'),
+                    apiCall('get-sessions')
+                ]);
+
+                const allData = {
+                    motorcycles: motorcyclesResponse.motorcycles || [],
+                    sessions: sessionsResponse.sessions || [],
+                    exportedAt: new Date().toISOString()
+                };
+
+                const dataStr = JSON.stringify(allData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `race_data_${currentMotorcycle ? currentMotorcycle.make + '_' + currentMotorcycle.model : 'all'}_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                alert('Error exporting data. Please try again.');
+            }
         }
 
         // Show save confirmation
@@ -629,6 +1087,14 @@
 
         // Initialize app when page loads
         window.addEventListener('DOMContentLoaded', initApp);
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('motorcycle-modal');
+            if (event.target === modal) {
+                closeAddMotorcycleModal();
+            }
+        });
     </script>
 </body>
 </html>
