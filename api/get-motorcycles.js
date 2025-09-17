@@ -1,12 +1,9 @@
-const { Client } = require('pg');
+import { Client } from 'pg';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  // ... rest of code
-  return res.status(200).json({ motorcycles: result.rows });
-}
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -35,15 +32,7 @@ export default async function handler(req, res) {
     const result = await client.query('SELECT * FROM motorcycles ORDER BY created_at DESC');
     await client.end();
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS'
-      },
-      body: JSON.stringify({ motorcycles: result.rows })
-    };
+    return res.status(200).json({ motorcycles: result.rows });
 
   } catch (error) {
     console.error('Database error:', error);
@@ -54,12 +43,6 @@ export default async function handler(req, res) {
       console.error('Error closing client:', closeError);
     }
     
-    return {
-      statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({ error: 'Database error', details: error.message })
-    };
+    return res.status(500).json({ error: 'Database error', details: error.message });
   }
-};
+}
