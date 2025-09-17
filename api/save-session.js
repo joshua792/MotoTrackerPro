@@ -1,21 +1,12 @@
-const { Client } = require('pg');
+import { Client } from 'pg';
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
-  // ... rest of code
-  return res.status(200).json({ motorcycles: result.rows });
-}
 
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const client = new Client({
@@ -28,7 +19,6 @@ export default async function handler(req, res) {
   try {
     await client.connect();
     
-    // Create table if it doesn't exist
     await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (
         id VARCHAR(255) PRIMARY KEY,
@@ -59,10 +49,9 @@ export default async function handler(req, res) {
       )
     `);
 
-    const sessionData = JSON.parse(event.body);
+    const sessionData = req.body;
     const sessionId = `${sessionData.event}_${sessionData.motorcycle.id}_${sessionData.session}`;
 
-    // Insert or update session
     const result = await client.query(
       `INSERT INTO sessions (
         id, event_id, motorcycle_id, session_type,
@@ -92,35 +81,15 @@ export default async function handler(req, res) {
     );
 
     await client.end();
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      },
-      body: JSON.stringify({ success: true, session: result.rows[0] })
-    };
+    return res.status(200).json({ success: true, session: result.rows[0] });
 
   } catch (error) {
     console.error('Database error:', error);
-    
     try {
       await client.end();
     } catch (closeError) {
       console.error('Error closing client:', closeError);
     }
-    
-    return {
-      statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({ 
-        error: 'Database error', 
-        details: error.message
-      })
-    };
+    return res.status(500).json({ error: 'Database error', details: error.message });
   }
-};
+}
