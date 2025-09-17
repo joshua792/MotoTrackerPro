@@ -175,8 +175,57 @@
 
         .setup-fields {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .input-group label {
+            min-width: 80px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .number-input-container {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .increment-btn {
+            background: #f8f9fa;
+            border: none;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c5aa0;
+            transition: background-color 0.2s;
+        }
+
+        .increment-btn:hover {
+            background: #e9ecef;
+        }
+
+        .increment-btn:active {
+            background: #dee2e6;
+        }
+
+        .number-input {
+            border: none;
+            padding: 5px 8px;
+            text-align: center;
+            width: 60px;
+            font-size: 13px;
+            outline: none;
         }
 
         .setup-fields input {
@@ -583,6 +632,28 @@
             return response.json();
         }
 
+        // Change value with increment/decrement buttons
+        function changeValue(inputId, change, min, max, step) {
+            const input = document.getElementById(inputId);
+            let currentValue = parseFloat(input.value) || min;
+            
+            // Apply the change
+            currentValue += change;
+            
+            // Round to proper decimal places based on step
+            if (step < 1) {
+                currentValue = Math.round(currentValue * 10) / 10;
+            } else {
+                currentValue = Math.round(currentValue);
+            }
+            
+            // Enforce min/max bounds
+            currentValue = Math.max(min, Math.min(max, currentValue));
+            
+            // Update input value
+            input.value = currentValue;
+        }
+
         // Initialize the app
         async function initApp() {
             await loadMotorcycles();
@@ -840,32 +911,32 @@
             const sessionKey = `${currentEvent}_${currentMotorcycle.id}_${currentSession}`;
             
             sessionData[sessionKey] = {
-                // Suspension data
-                frontSpring: document.getElementById('front-spring').value,
-                frontPreload: document.getElementById('front-preload').value,
-                frontCompression: document.getElementById('front-compression').value,
-                frontRebound: document.getElementById('front-rebound').value,
-                rearSpring: document.getElementById('rear-spring').value,
-                rearPreload: document.getElementById('rear-preload').value,
-                rearCompression: document.getElementById('rear-compression').value,
-                rearRebound: document.getElementById('rear-rebound').value,
+                // Suspension data - convert to strings to maintain compatibility
+                frontSpring: document.getElementById('front-spring').value || '',
+                frontPreload: document.getElementById('front-preload').value || '',
+                frontCompression: document.getElementById('front-compression').value || '',
+                frontRebound: document.getElementById('front-rebound').value || '',
+                rearSpring: document.getElementById('rear-spring').value || '',
+                rearPreload: document.getElementById('rear-preload').value || '',
+                rearCompression: document.getElementById('rear-compression').value || '',
+                rearRebound: document.getElementById('rear-rebound').value || '',
                 
                 // Gearing data
-                frontSprocket: document.getElementById('front-sprocket').value,
-                rearSprocket: document.getElementById('rear-sprocket').value,
-                swingarmLength: document.getElementById('swingarm-length').value,
+                frontSprocket: document.getElementById('front-sprocket').value || '',
+                rearSprocket: document.getElementById('rear-sprocket').value || '',
+                swingarmLength: document.getElementById('swingarm-length').value || '',
                 
                 // Tire and geometry data
-                frontTire: document.getElementById('front-tire').value,
-                rearTire: document.getElementById('rear-tire').value,
-                frontPressure: document.getElementById('front-pressure').value,
-                rearPressure: document.getElementById('rear-pressure').value,
-                rake: document.getElementById('rake').value,
-                trail: document.getElementById('trail').value,
+                frontTire: document.getElementById('front-tire').value || '',
+                rearTire: document.getElementById('rear-tire').value || '',
+                frontPressure: document.getElementById('front-pressure').value || '',
+                rearPressure: document.getElementById('rear-pressure').value || '',
+                rake: document.getElementById('rake').value || '',
+                trail: document.getElementById('trail').value || '',
                 
                 // Notes and feedback
-                notes: document.getElementById('notes').value,
-                feedback: document.getElementById('feedback').value,
+                notes: document.getElementById('notes').value || '',
+                feedback: document.getElementById('feedback').value || '',
                 
                 // Metadata
                 timestamp: new Date().toISOString(),
