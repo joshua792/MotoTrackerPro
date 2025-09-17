@@ -1,15 +1,12 @@
 const { Client } = require('pg');
 
-exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'GET') {
-    return {
-      statusCode: 405,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
+  // ... rest of code
+  return res.status(200).json({ motorcycles: result.rows });
+}
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
