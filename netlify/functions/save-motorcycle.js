@@ -1,22 +1,39 @@
 const { Client } = require('pg');
 
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
 exports.handler = async (event, context) => {
+  // Handle preflight CORS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
 
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+
   try {
     await client.connect();
+    console.log('Database connected successfully');
     
     // Create table if it doesn't exist
     await client.query(`
@@ -31,8 +48,14 @@ exports.handler = async (event, context) => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log('Table created/verified');
 
-    const { id, make, model, class: bikeClass, number, variant } = JSON.parse(event.body);
+    const requestBody = JSON.parse(event.body);
+    console.log('Request body:', requestBody);
+
+    const { id, make, model, class: bikeClass, number, variant } = requestBody;
+
+    console.log('Parsed data:', { id, make, model, bikeClass, number, variant });
 
     // Insert or update motorcycle
     const result = await client.query(
@@ -44,6 +67,7 @@ exports.handler = async (event, context) => {
       [id, make, model, bikeClass, number, variant]
     );
 
+    console.log('Query result:', result.rows[0]);
     await client.end();
 
     return {
@@ -57,12 +81,8 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('Database error:', error);
-    await client.end();
+    console.error('Detailed error:', error);
     
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Database error', details: error.message })
-    };
-  }
-};
+    try {
+      await client.end();
+    } catch (cl
