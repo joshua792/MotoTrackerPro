@@ -1,19 +1,34 @@
 const { Client } = require('pg');
 
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
 exports.handler = async (event, context) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
+
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
 
   try {
     await client.connect();
@@ -73,11 +88,11 @@ exports.handler = async (event, context) => {
        RETURNING *`,
       [
         sessionId, sessionData.event, sessionData.motorcycle.id, sessionData.session,
-        sessionData.frontSpring, sessionData.frontPreload, sessionData.frontCompression, sessionData.frontRebound,
-        sessionData.rearSpring, sessionData.rearPreload, sessionData.rearCompression, sessionData.rearRebound,
-        sessionData.frontSprocket, sessionData.rearSprocket, sessionData.swingarmLength,
-        sessionData.frontTire, sessionData.rearTire, sessionData.frontPressure, sessionData.rearPressure,
-        sessionData.rake, sessionData.trail, sessionData.notes, sessionData.feedback
+        sessionData.frontSpring || '', sessionData.frontPreload || '', sessionData.frontCompression || '', sessionData.frontRebound || '',
+        sessionData.rearSpring || '', sessionData.rearPreload || '', sessionData.rearCompression || '', sessionData.rearRebound || '',
+        sessionData.frontSprocket || '', sessionData.rearSprocket || '', sessionData.swingarmLength || '',
+        sessionData.frontTire || '', sessionData.rearTire || '', sessionData.frontPressure || '', sessionData.rearPressure || '',
+        sessionData.rake || '', sessionData.trail || '', sessionData.notes || '', sessionData.feedback || ''
       ]
     );
 
@@ -95,11 +110,22 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Database error:', error);
-    await client.end();
+    
+    try {
+      await client.end();
+    } catch (closeError) {
+      console.error('Error closing client:', closeError);
+    }
     
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Database error', details: error.message })
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ 
+        error: 'Database error', 
+        details: error.message
+      })
     };
   }
 };
