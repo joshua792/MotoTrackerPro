@@ -1,22 +1,39 @@
 const { Client } = require('pg');
 
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
 exports.handler = async (event, context) => {
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
 
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+
   try {
     await client.connect();
+    
+    // Create table if it doesn't exist
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS motorcycles (
+        id VARCHAR(255) PRIMARY KEY,
+        make VARCHAR(100) NOT NULL,
+        model VARCHAR(100) NOT NULL,
+        class VARCHAR(100) NOT NULL,
+        number VARCHAR(10) NOT NULL,
+        variant VARCHAR(10) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     
     const result = await client.query('SELECT * FROM motorcycles ORDER BY created_at DESC');
     await client.end();
@@ -33,10 +50,18 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Database error:', error);
-    await client.end();
+    
+    try {
+      await client.end();
+    } catch (closeError) {
+      console.error('Error closing client:', closeError);
+    }
     
     return {
       statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
       body: JSON.stringify({ error: 'Database error', details: error.message })
     };
   }
