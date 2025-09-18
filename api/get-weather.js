@@ -26,6 +26,7 @@ module.exports = async function handler(req, res) {
     });
 
     let lat, lon;
+    let coordResult = null;
 
     // First try to find coordinates from previous sessions at this track
     try {
@@ -39,7 +40,7 @@ module.exports = async function handler(req, res) {
         LIMIT 1
       `;
       
-      const coordResult = await pool.query(coordQuery, [searchLocation]);
+      coordResult = await pool.query(coordQuery, [searchLocation]);
       
       if (coordResult.rows.length > 0) {
         lat = coordResult.rows[0].latitude;
@@ -55,13 +56,19 @@ module.exports = async function handler(req, res) {
       console.log(`Using geocoding for: ${searchLocation}`);
       
       const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchLocation)}&limit=1&appid=${apiKey}`;
+      console.log('Geocoding URL:', geocodeUrl.replace(apiKey, 'HIDDEN'));
+      
       const geocodeResponse = await fetch(geocodeUrl);
+      console.log('Geocoding status:', geocodeResponse.status);
       
       if (!geocodeResponse.ok) {
+        const geocodeError = await geocodeResponse.text();
+        console.log('Geocoding error:', geocodeError);
         throw new Error(`Geocoding failed: ${geocodeResponse.status} ${geocodeResponse.statusText}`);
       }
       
       const geocodeData = await geocodeResponse.json();
+      console.log('Geocoding data:', geocodeData);
 
       if (!geocodeData || geocodeData.length === 0) {
         await pool.end();
@@ -70,17 +77,25 @@ module.exports = async function handler(req, res) {
 
       lat = geocodeData[0].lat;
       lon = geocodeData[0].lon;
+      console.log('Coordinates from geocoding:', lat, lon);
     }
 
     // Get current weather
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+    console.log('Weather URL:', weatherUrl.replace(apiKey, 'HIDDEN'));
+    
     const weatherResponse = await fetch(weatherUrl);
+    console.log('Weather response status:', weatherResponse.status);
     
     if (!weatherResponse.ok) {
+      const weatherError = await weatherResponse.text();
+      console.log('Weather error:', weatherError);
+      await pool.end();
       throw new Error(`Weather API failed: ${weatherResponse.status} ${weatherResponse.statusText}`);
     }
     
     const weatherData = await weatherResponse.json();
+    console.log('Weather data received:', weatherData);
 
     const weather = {
       temperature: Math.round(weatherData.main?.temp || 0),
@@ -96,11 +111,13 @@ module.exports = async function handler(req, res) {
 
     await pool.end();
 
+    console.log('Final weather object:', weather);
+
     res.json({
       success: true,
       weather,
       location: searchLocation,
-      source: lat === coordResult?.rows?.[0]?.latitude ? 'database' : 'geocoding'
+      source: coordResult?.rows?.length > 0 ? 'database' : 'geocoding'
     });
 
   } catch (error) {
