@@ -29,10 +29,13 @@ export default async function handler(req, res) {
         front_tire, rear_tire, front_pressure, rear_pressure,
         rake, trail, notes, feedback,
         front_ride_height, rear_ride_height, front_sag, rear_sag, swingarm_angle,
+        weather_temperature, weather_condition, weather_description, 
+        weather_humidity, weather_wind_speed, weather_captured_at,
         updated_at
        ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-        $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, CURRENT_TIMESTAMP
+        $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
+        $29, $30, $31, $32, $33, $34, CURRENT_TIMESTAMP
        ) ON CONFLICT (id) DO UPDATE SET
         front_spring = $5, front_preload = $6, front_compression = $7, front_rebound = $8,
         rear_spring = $9, rear_preload = $10, rear_compression = $11, rear_rebound = $12,
@@ -40,7 +43,9 @@ export default async function handler(req, res) {
         front_tire = $16, rear_tire = $17, front_pressure = $18, rear_pressure = $19,
         rake = $20, trail = $21, notes = $22, feedback = $23,
         front_ride_height = $24, rear_ride_height = $25, front_sag = $26, rear_sag = $27, 
-        swingarm_angle = $28, updated_at = CURRENT_TIMESTAMP
+        swingarm_angle = $28, weather_temperature = $29, weather_condition = $30, 
+        weather_description = $31, weather_humidity = $32, weather_wind_speed = $33,
+        weather_captured_at = $34, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
       [
         sessionId, sessionData.event, sessionData.motorcycle.id, sessionData.session,
@@ -50,7 +55,9 @@ export default async function handler(req, res) {
         sessionData.frontTire || '', sessionData.rearTire || '', sessionData.frontPressure || '', sessionData.rearPressure || '',
         sessionData.rake || '', sessionData.trail || '', sessionData.notes || '', sessionData.feedback || '',
         sessionData.frontRideHeight || '', sessionData.rearRideHeight || '', sessionData.frontSag || '', sessionData.rearSag || '',
-        sessionData.swingarmAngle || ''
+        sessionData.swingarmAngle || '', sessionData.weatherTemperature || '', sessionData.weatherCondition || '',
+        sessionData.weatherDescription || '', sessionData.weatherHumidity || '', sessionData.weatherWindSpeed || '',
+        sessionData.weatherCapturedAt || null
       ]
     );
 
