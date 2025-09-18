@@ -88,6 +88,16 @@ function loadSettings() {
         document.getElementById('user-name').value = settings.userName;
         document.getElementById('user-email').value = settings.userEmail;
         document.getElementById('user-team').value = settings.userTeam;
+
+        // Load user race series
+        const seriesSelect = document.getElementById('user-race-series');
+        const userSeries = settings.userRaceSeries || [];
+        Array.from(seriesSelect.options).forEach(option => {
+            option.selected = userSeries.includes(option.value);
+        });
+
+        // Update event series dropdown
+        updateEventSeriesDropdown();
     }
 }
 
@@ -114,9 +124,44 @@ function saveAccountSettings() {
     settings.userName = document.getElementById('user-name').value;
     settings.userEmail = document.getElementById('user-email').value;
     settings.userTeam = document.getElementById('user-team').value;
-    
+
+    // Get selected race series
+    const seriesSelect = document.getElementById('user-race-series');
+    const selectedSeries = Array.from(seriesSelect.selectedOptions).map(option => option.value);
+    settings.userRaceSeries = selectedSeries;
+
     localStorage.setItem('raceTrackerSettings', JSON.stringify(settings));
+
+    // Update event series dropdown
+    updateEventSeriesDropdown();
+
     alert('Account information saved!');
+}
+
+// Update event series dropdown based on user settings
+function updateEventSeriesDropdown() {
+    const eventSeriesSelect = document.getElementById('event-series');
+    const userSeries = settings.userRaceSeries || [];
+
+    // Clear existing options except the first one
+    eventSeriesSelect.innerHTML = '<option value="">Select Series...</option>';
+
+    // Add user's selected series
+    userSeries.forEach(series => {
+        const option = document.createElement('option');
+        option.value = series;
+        option.textContent = series;
+        eventSeriesSelect.appendChild(option);
+    });
+
+    // If no series selected, show a message
+    if (userSeries.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Configure race series in Account Settings';
+        option.disabled = true;
+        eventSeriesSelect.appendChild(option);
+    }
 }
 
 function updateUnitLabels() {

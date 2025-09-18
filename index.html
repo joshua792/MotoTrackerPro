@@ -436,6 +436,23 @@
                     <label for="user-team">Team</label>
                     <input type="text" id="user-team" placeholder="Team name">
                 </div>
+                <div class="form-group">
+                    <label for="user-race-series">Race Series</label>
+                    <select id="user-race-series" multiple style="height: 120px; width: 100%;">
+                        <option value="MotoAmerica">MotoAmerica</option>
+                        <option value="WERA">WERA</option>
+                        <option value="CRA">CRA</option>
+                        <option value="OMRRA">OMRRA</option>
+                        <option value="AMA">AMA</option>
+                        <option value="FIM">FIM</option>
+                        <option value="BSB">British Superbike</option>
+                        <option value="IDM">IDM</option>
+                        <option value="CSBK">CSBK</option>
+                        <option value="Local Track Day">Local Track Day</option>
+                        <option value="Private Test">Private Test</option>
+                    </select>
+                    <small style="color: #666; font-size: 12px;">Hold Ctrl/Cmd to select multiple series</small>
+                </div>
                 <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account</button>
             </div>
         </div>
@@ -451,17 +468,8 @@
                 <label for="event-series">Race Series</label>
                 <select id="event-series">
                     <option value="">Select Series...</option>
-                    <option value="MotoAmerica">MotoAmerica</option>
-                    <option value="WERA">WERA</option>
-                    <option value="CMRA">CMRA</option>
-                    <option value="AFM">AFM</option>
-                    <option value="CRA">CRA</option>
-                    <option value="NESBA">NESBA</option>
-                    <option value="LRRS">LRRS</option>
-                    <option value="CCS">CCS</option>
-                    <option value="WMRRA">WMRRA</option>
-                    <option value="Other">Other</option>
                 </select>
+                <small style="color: #666; font-size: 12px;">Configure your race series in Account Settings</small>
             </div>
             
             <div class="form-group">
@@ -914,6 +922,23 @@
                 <div class="form-group">
                     <label for="user-team">Team</label>
                     <input type="text" id="user-team" placeholder="Team name">
+                </div>
+                <div class="form-group">
+                    <label for="user-race-series">Race Series</label>
+                    <select id="user-race-series" multiple style="height: 120px; width: 100%;">
+                        <option value="MotoAmerica">MotoAmerica</option>
+                        <option value="WERA">WERA</option>
+                        <option value="CRA">CRA</option>
+                        <option value="OMRRA">OMRRA</option>
+                        <option value="AMA">AMA</option>
+                        <option value="FIM">FIM</option>
+                        <option value="BSB">British Superbike</option>
+                        <option value="IDM">IDM</option>
+                        <option value="CSBK">CSBK</option>
+                        <option value="Local Track Day">Local Track Day</option>
+                        <option value="Private Test">Private Test</option>
+                    </select>
+                    <small style="color: #666; font-size: 12px;">Hold Ctrl/Cmd to select multiple series</small>
                 </div>
                 <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account</button>
             </div>
