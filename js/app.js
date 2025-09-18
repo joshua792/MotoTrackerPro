@@ -81,13 +81,39 @@ function loadAppState() {
 function loadSettings() {
     const savedSettings = JSON.parse(localStorage.getItem('raceTrackerSettings') || '{}');
     settings = { ...settings, ...savedSettings };
-    
+
     if (document.getElementById('pressure-unit')) {
         document.getElementById('pressure-unit').value = settings.pressureUnit;
         document.getElementById('temperature-unit').value = settings.temperatureUnit;
-        document.getElementById('user-name').value = settings.userName;
-        document.getElementById('user-email').value = settings.userEmail;
-        document.getElementById('user-team').value = settings.userTeam;
+
+        // Load account info from current user if available
+        if (currentUser) {
+            document.getElementById('user-name').value = currentUser.name || '';
+            document.getElementById('user-email').value = currentUser.email || '';
+            document.getElementById('user-team').value = currentUser.team || '';
+
+            // Show admin tab if user is admin
+            if (currentUser.is_admin) {
+                document.getElementById('admin-tab').style.display = 'block';
+            }
+
+            // Show admin switched notice if applicable
+            if (authToken) {
+                try {
+                    const tokenPayload = JSON.parse(atob(authToken.split('.')[1]));
+                    if (tokenPayload.adminSwitched) {
+                        document.getElementById('admin-switched-notice').style.display = 'block';
+                    }
+                } catch (e) {
+                    // Token parsing failed, ignore
+                }
+            }
+        } else {
+            // Fallback to saved settings for offline state
+            document.getElementById('user-name').value = settings.userName;
+            document.getElementById('user-email').value = settings.userEmail;
+            document.getElementById('user-team').value = settings.userTeam;
+        }
 
         // Load user race series
         const seriesSelect = document.getElementById('user-race-series');
@@ -120,23 +146,86 @@ function saveUnitSettings() {
     alert('Unit preferences saved!');
 }
 
-function saveAccountSettings() {
-    settings.userName = document.getElementById('user-name').value;
-    settings.userEmail = document.getElementById('user-email').value;
-    settings.userTeam = document.getElementById('user-team').value;
+async function saveAccountSettings() {
+    const userName = document.getElementById('user-name').value;
+    const userTeam = document.getElementById('user-team').value;
 
     // Get selected race series
     const seriesSelect = document.getElementById('user-race-series');
     const selectedSeries = Array.from(seriesSelect.selectedOptions).map(option => option.value);
-    settings.userRaceSeries = selectedSeries;
 
-    localStorage.setItem('raceTrackerSettings', JSON.stringify(settings));
+    try {
+        const response = await apiCall('auth/update-profile', {
+            method: 'POST',
+            body: JSON.stringify({
+                name: userName,
+                team: userTeam
+            })
+        });
 
-    // Update event series dropdown and main event dropdown
-    updateEventSeriesDropdown();
-    updateEventDropdown(); // Refresh home page event dropdown with new filtering
+        if (response.success) {
+            // Update local user object
+            currentUser.name = userName;
+            currentUser.team = userTeam;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
-    alert('Account information saved!');
+            // Update local settings for race series
+            settings.userRaceSeries = selectedSeries;
+            localStorage.setItem('raceTrackerSettings', JSON.stringify(settings));
+
+            // Update event series dropdown and main event dropdown
+            updateEventSeriesDropdown();
+            updateEventDropdown(); // Refresh home page event dropdown with new filtering
+
+            alert('Account information saved!');
+        }
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        alert('Error saving account information: ' + error.message);
+    }
+}
+
+async function changePassword() {
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-new-password').value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        alert('Please fill in all password fields');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        alert('New passwords do not match');
+        return;
+    }
+
+    if (newPassword.length < 8) {
+        alert('New password must be at least 8 characters long');
+        return;
+    }
+
+    try {
+        const response = await apiCall('auth/change-password', {
+            method: 'POST',
+            body: JSON.stringify({
+                currentPassword,
+                newPassword
+            })
+        });
+
+        if (response.success) {
+            // Clear password fields
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-new-password').value = '';
+
+            alert('Password changed successfully!');
+        }
+    } catch (error) {
+        console.error('Error changing password:', error);
+        alert('Error changing password: ' + error.message);
+    }
 }
 
 // Update event series dropdown based on user settings
@@ -229,12 +318,22 @@ async function exportData() {
             apiCall('get-tires')
         ]);
 
+        // Remove sensitive fields from export data
+        const cleanData = (items, sensitiveFields = ['user_id']) => {
+            return items.map(item => {
+                const cleaned = { ...item };
+                sensitiveFields.forEach(field => delete cleaned[field]);
+                return cleaned;
+            });
+        };
+
         const allData = {
-            motorcycles: motorcyclesResponse.motorcycles || [],
-            sessions: sessionsResponse.sessions || [],
-            events: eventsResponse.events || [],
-            tires: tiresResponse.tires || [],
-            exportedAt: new Date().toISOString()
+            motorcycles: cleanData(motorcyclesResponse.motorcycles || []),
+            sessions: cleanData(sessionsResponse.sessions || []),
+            events: cleanData(eventsResponse.events || []),
+            tires: cleanData(tiresResponse.tires || []),
+            exportedAt: new Date().toISOString(),
+            note: "This export contains your personal racing data only"
         };
 
         const dataStr = JSON.stringify(allData, null, 2);
@@ -287,6 +386,92 @@ async function loadAppData() {
     } catch (error) {
         console.error('Error loading app data:', error);
         // If data loading fails due to auth issues, auth.js will handle logout
+    }
+}
+
+// Admin functionality
+async function loadUsersList() {
+    try {
+        const response = await apiCall('auth/admin-list-users');
+
+        if (response.success) {
+            const usersList = document.getElementById('users-list');
+
+            if (response.users.length === 0) {
+                usersList.innerHTML = '<p>No users found.</p>';
+                return;
+            }
+
+            let html = '<div style="margin-bottom: 15px;"><strong>Total Users: ' + response.users.length + '</strong></div>';
+
+            response.users.forEach(user => {
+                html += `
+                    <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 4px; background: ${user.is_admin ? '#fff3cd' : '#ffffff'};">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${user.name}</strong> ${user.is_admin ? '<span style="color: #d63384;">[ADMIN]</span>' : ''}
+                                <br><span style="color: #666; font-size: 12px;">${user.email}</span>
+                                ${user.team ? `<br><span style="color: #666; font-size: 12px;">Team: ${user.team}</span>` : ''}
+                                <br><span style="color: #666; font-size: 12px;">Created: ${new Date(user.created_at).toLocaleDateString()}</span>
+                                ${user.last_login ? `<br><span style="color: #666; font-size: 12px;">Last Login: ${new Date(user.last_login).toLocaleDateString()}</span>` : ''}
+                            </div>
+                            <div>
+                                <button class="btn btn-small btn-secondary" onclick="switchToUser('${user.id}', '${user.name}')">
+                                    Switch to User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            usersList.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Error loading users list:', error);
+        document.getElementById('users-list').innerHTML = '<p style="color: #d63384;">Error loading users: ' + error.message + '</p>';
+    }
+}
+
+async function switchToUser(userId, userName) {
+    if (!confirm(`Switch to user: ${userName}?`)) {
+        return;
+    }
+
+    try {
+        const response = await apiCall('auth/admin-switch-user', {
+            method: 'POST',
+            body: JSON.stringify({ targetUserId: userId })
+        });
+
+        if (response.success) {
+            // Update auth token and user
+            authToken = response.token;
+            currentUser = response.user;
+
+            // Update localStorage
+            localStorage.setItem('authToken', authToken);
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+            // Refresh the page to load the new user's data
+            alert(`Switched to user: ${response.user.name}`);
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Error switching user:', error);
+        alert('Error switching user: ' + error.message);
+    }
+}
+
+function switchBackToAdmin() {
+    try {
+        const tokenPayload = JSON.parse(atob(authToken.split('.')[1]));
+        if (tokenPayload.originalAdminId) {
+            switchToUser(tokenPayload.originalAdminId, 'Admin Account');
+        }
+    } catch (error) {
+        console.error('Error switching back to admin:', error);
+        alert('Error switching back to admin account');
     }
 }
 

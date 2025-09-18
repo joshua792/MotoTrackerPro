@@ -28,12 +28,18 @@ async function initAuth() {
 function showAuthModal(mode = 'login') {
     document.getElementById('auth-modal').style.display = 'block';
 
+    // Hide all forms first
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('reset-form').style.display = 'none';
+
+    // Show the requested form
     if (mode === 'login') {
         document.getElementById('login-form').style.display = 'block';
-        document.getElementById('register-form').style.display = 'none';
-    } else {
-        document.getElementById('login-form').style.display = 'none';
+    } else if (mode === 'register') {
         document.getElementById('register-form').style.display = 'block';
+    } else if (mode === 'reset') {
+        document.getElementById('reset-form').style.display = 'block';
     }
 }
 
@@ -50,6 +56,7 @@ function clearAuthForms() {
     document.getElementById('register-password').value = '';
     document.getElementById('register-confirm-password').value = '';
     document.getElementById('register-team').value = '';
+    document.getElementById('reset-email').value = '';
 }
 
 // Login functionality
@@ -262,6 +269,31 @@ function wrapApiCall() {
             throw error;
         }
     };
+}
+
+// Password reset functionality
+async function resetPassword() {
+    const email = document.getElementById('reset-email').value;
+
+    if (!email) {
+        alert('Please enter your email address');
+        return;
+    }
+
+    try {
+        const response = await apiCall('auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+
+        if (response.success) {
+            alert('Password reset instructions have been sent to your email address.');
+            showAuthModal('login');
+        }
+    } catch (error) {
+        console.error('Password reset error:', error);
+        alert('Password reset failed: ' + error.message);
+    }
 }
 
 // Wrap apiCall when available

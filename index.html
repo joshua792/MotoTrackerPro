@@ -395,6 +395,7 @@
                     <button class="btn btn-secondary" onclick="showSettingsTab('units')" id="units-tab">Units</button>
                     <button class="btn btn-secondary" onclick="showSettingsTab('events')" id="events-tab">Events</button>
                     <button class="btn btn-secondary" onclick="showSettingsTab('account')" id="account-tab">Account</button>
+                    <button class="btn btn-secondary" onclick="showSettingsTab('admin')" id="admin-tab" style="display: none;">Admin</button>
                 </div>
             </div>
 
@@ -438,7 +439,8 @@
                 </div>
                 <div class="form-group">
                     <label for="user-email">Email</label>
-                    <input type="email" id="user-email" placeholder="your@email.com">
+                    <input type="email" id="user-email" placeholder="your@email.com" readonly style="background-color: #f9f9f9;">
+                    <small style="color: #666; font-size: 12px;">Email cannot be changed (used for login)</small>
                 </div>
                 <div class="form-group">
                     <label for="user-team">Team</label>
@@ -461,7 +463,47 @@
                     </select>
                     <small style="color: #666; font-size: 12px;">Hold Ctrl/Cmd to select multiple series</small>
                 </div>
-                <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account</button>
+
+                <hr style="margin: 30px 0; border: 1px solid #ddd;">
+
+                <h3>Change Password</h3>
+                <div class="form-group">
+                    <label for="current-password">Current Password</label>
+                    <input type="password" id="current-password" placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password" placeholder="Enter new password (min 8 characters)">
+                </div>
+                <div class="form-group">
+                    <label for="confirm-new-password">Confirm New Password</label>
+                    <input type="password" id="confirm-new-password" placeholder="Confirm new password">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account Info</button>
+                    <button class="btn btn-secondary" onclick="changePassword()">Change Password</button>
+                </div>
+            </div>
+
+            <!-- Admin Tab -->
+            <div id="admin-settings" class="settings-tab" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Admin Panel</h3>
+                    <div id="admin-switched-notice" style="display: none; color: #d63384; font-weight: bold; font-size: 12px;">
+                        ADMIN MODE: Viewing as different user
+                        <button class="btn btn-small" onclick="switchBackToAdmin()" style="margin-left: 10px;">Switch Back</button>
+                    </div>
+                </div>
+
+                <h4>User Management</h4>
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-secondary" onclick="loadUsersList()">Refresh Users List</button>
+                </div>
+
+                <div id="users-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                    <p>Click "Refresh Users List" to load users</p>
+                </div>
             </div>
         </div>
     </div>
@@ -580,7 +622,8 @@
                     <button class="btn btn-primary" onclick="login()" style="width: 100%;">Login</button>
                 </div>
                 <div class="form-group" style="text-align: center;">
-                    <a href="#" onclick="showAuthModal('register')" style="color: #2c5aa0; text-decoration: none;">Don't have an account? Register</a>
+                    <a href="#" onclick="showAuthModal('register')" style="color: #2c5aa0; text-decoration: none;">Don't have an account? Register</a><br>
+                    <a href="#" onclick="showAuthModal('reset')" style="color: #2c5aa0; text-decoration: none; font-size: 12px;">Forgot Password?</a>
                 </div>
             </div>
 
@@ -612,6 +655,21 @@
                 </div>
                 <div class="form-group" style="text-align: center;">
                     <a href="#" onclick="showAuthModal('login')" style="color: #2c5aa0; text-decoration: none;">Already have an account? Login</a>
+                </div>
+            </div>
+
+            <!-- Password Reset Form -->
+            <div id="reset-form" style="display: none;">
+                <div class="modal-header">Reset Password</div>
+                <div class="form-group">
+                    <label for="reset-email">Email</label>
+                    <input type="email" id="reset-email" placeholder="Enter your email address" required>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="resetPassword()" style="width: 100%;">Send Reset Instructions</button>
+                </div>
+                <div class="form-group" style="text-align: center;">
+                    <a href="#" onclick="showAuthModal('login')" style="color: #2c5aa0; text-decoration: none;">Back to Login</a>
                 </div>
             </div>
         </div>

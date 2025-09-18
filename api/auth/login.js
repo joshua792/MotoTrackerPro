@@ -22,6 +22,23 @@ module.exports = async function handler(req, res) {
 
     console.log('Login attempt for:', email);
 
+    // Add admin column if it doesn't exist
+    try {
+      const checkAdminColumn = `
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'is_admin'
+      `;
+      const columnExists = await pool.query(checkAdminColumn);
+
+      if (columnExists.rows.length === 0) {
+        console.log('Adding is_admin column to users table...');
+        await pool.query('ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE');
+      }
+    } catch (alterError) {
+      console.error('Error checking/adding is_admin column:', alterError);
+    }
+
     // Find user by email
     const userQuery = 'SELECT * FROM users WHERE email = $1';
     const userResult = await pool.query(userQuery, [email.toLowerCase()]);
@@ -65,6 +82,7 @@ module.exports = async function handler(req, res) {
       name: user.name,
       email: user.email,
       team: user.team,
+      is_admin: user.is_admin || false,
       created_at: user.created_at
     };
 
