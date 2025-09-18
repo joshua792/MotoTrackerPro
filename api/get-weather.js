@@ -1,6 +1,6 @@
-import { Pool } from 'pg';
+const { Pool } = require('pg');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -27,75 +27,27 @@ export default async function handler(req, res) {
 
     let lat, lon;
 
-    // Try to find track coordinates in our sessions table first
-    try {
-      // Check what columns exist first
-      const columnsQuery = `
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'sessions' 
-        AND column_name IN ('track', 'track_name', 'location', 'latitude', 'longitude')
-      `;
-      
-      const columnsResult = await pool.query(columnsQuery);
-      const availableColumns = columnsResult.rows.map(row => row.column_name);
-      
-      console.log('Available location columns:', availableColumns);
-
-      // Only try database lookup if we have both location and coordinate columns
-      if (availableColumns.includes('latitude') && availableColumns.includes('longitude')) {
-        let locationColumn = null;
-        if (availableColumns.includes('track')) {
-          locationColumn = 'track';
-        } else if (availableColumns.includes('track_name')) {
-          locationColumn = 'track_name';
-        } else if (availableColumns.includes('location')) {
-          locationColumn = 'location';
-        }
-
-        if (locationColumn) {
-          const trackQuery = `
-            SELECT DISTINCT latitude, longitude 
-            FROM sessions 
-            WHERE LOWER(${locationColumn}) = LOWER($1) 
-            AND latitude IS NOT NULL 
-            AND longitude IS NOT NULL 
-            LIMIT 1
-          `;
-          
-          const trackResult = await pool.query(trackQuery, [searchLocation]);
-          
-          if (trackResult.rows.length > 0) {
-            lat = trackResult.rows[0].latitude;
-            lon = trackResult.rows[0].longitude;
-            console.log(`Found coordinates in database: ${lat}, ${lon}`);
-          }
-        }
-      }
-    } catch (dbError) {
-      // If database query fails, continue to geocoding
-      console.log('Database lookup failed, using geocoding:', dbError.message);
+    // Since your sessions table doesn't have track columns but has lat/lon,
+    // we'll skip database lookup and go straight to geocoding
+    console.log('Skipping database lookup - using geocoding for:', searchLocation);
+    
+    // Try geocoding the location name
+    const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchLocation)}&limit=1&appid=${apiKey}`;
+    const geocodeResponse = await fetch(geocodeUrl);
+    
+    if (!geocodeResponse.ok) {
+      throw new Error(`Geocoding failed: ${geocodeResponse.status} ${geocodeResponse.statusText}`);
     }
     
-    // If no coordinates found in database, try geocoding
-    if (!lat || !lon) {
-      const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchLocation)}&limit=1&appid=${apiKey}`;
-      const geocodeResponse = await fetch(geocodeUrl);
-      
-      if (!geocodeResponse.ok) {
-        throw new Error(`Geocoding failed: ${geocodeResponse.status} ${geocodeResponse.statusText}`);
-      }
-      
-      const geocodeData = await geocodeResponse.json();
+    const geocodeData = await geocodeResponse.json();
 
-      if (!geocodeData || geocodeData.length === 0) {
-        await pool.end();
-        return res.status(404).json({ error: `Location '${searchLocation}' not found` });
-      }
-
-      lat = geocodeData[0].lat;
-      lon = geocodeData[0].lon;
+    if (!geocodeData || geocodeData.length === 0) {
+      await pool.end();
+      return res.status(404).json({ error: `Location '${searchLocation}' not found` });
     }
+
+    lat = geocodeData[0].lat;
+    lon = geocodeData[0].lon;
 
     // Get current weather
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
