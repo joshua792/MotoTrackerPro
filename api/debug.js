@@ -1,6 +1,6 @@
-import { Pool } from 'pg';
+const { Pool } = require('pg');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     // Test database connection
     const pool = new Pool({
