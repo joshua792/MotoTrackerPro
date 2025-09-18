@@ -6,8 +6,7 @@ export default async function handler(req, res) {
   const { lat, lon, location } = req.query;
 
   try {
-    // Use a free weather API (OpenWeatherMap free tier)
-    const apiKey = process.env.OPENWEATHER_API_KEY; // You'll need to add this env var
+    const apiKey = process.env.OPENWEATHER_API_KEY;
     
     let weatherUrl;
     if (lat && lon) {
