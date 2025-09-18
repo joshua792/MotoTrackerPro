@@ -1,1 +1,331 @@
+// js/events.js - Event management functions
 
+let currentEditingEventId = null;
+
+// Load events from database
+async function loadEvents() {
+    try {
+        const response = await apiCall('get-events');
+        events = response.events || [];
+        updateEventDropdown();
+    } catch (error) {
+        console.error('Error loading events:', error);
+        events = [];
+    }
+}
+
+// Update event dropdown
+function updateEventDropdown() {
+    const select = document.getElementById('event-select');
+    select.innerHTML = '<option value="">Select an event...</option>';
+    
+    events.forEach(event => {
+        const option = document.createElement('option');
+        option.value = event.id;
+        option.textContent = `${event.date.split('-')[1]}/${event.date.split('-')[2]} - ${event.location}`;
+        select.appendChild(option);
+    });
+}
+
+// Settings modal functions
+function showSettingsModal() {
+    loadSettings();
+    document.getElementById('settings-modal').style.display = 'block';
+    showSettingsTab('units');
+}
+
+function closeSettingsModal() {
+    document.getElementById('settings-modal').style.display = 'none';
+}
+
+function showSettingsTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('#settings-modal .btn').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-settings').style.display = 'block';
+    document.getElementById(tabName + '-tab').classList.remove('btn-secondary');
+    document.getElementById(tabName + '-tab').classList.add('btn-primary');
+    
+    if (tabName === 'events') {
+        displayEventsList();
+    }
+}
+
+// Display events list in settings
+function displayEventsList() {
+    const container = document.getElementById('events-list');
+    
+    if (events.length === 0) {
+        container.innerHTML = '<p>No events found. Add some events to get started.</p>';
+        return;
+    }
+    
+    container.innerHTML = events.map(event => `
+        <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div onclick="editEvent('${event.id}')" style="flex: 1; cursor: pointer;">
+                <strong>${event.name}</strong><br>
+                <span style="color: #666;">${event.track} - ${event.location}</span><br>
+                <span style="font-size: 12px; color: #888;">${new Date(event.date).toLocaleDateString()}</span>
+            </div>
+            <button onclick="deleteEvent('${event.id}')" 
+                    style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 5px 10px; cursor: pointer;">
+                Delete
+            </button>
+        </div>
+    `).join('');
+}
+
+// Edit event
+function editEvent(eventId) {
+    const event = events.find(e => e.id === eventId);
+    if (!event) return;
+
+    currentEditingEventId = eventId;
+    
+    // Populate modal with existing data
+    document.getElementById('event-name').value = event.name;
+    document.getElementById('event-track').value = event.track;
+    document.getElementById('event-date').value = event.date;
+    document.getElementById('event-location').value = event.location;
+    
+    // Update date display
+    updateEventDateRange();
+    
+    // Change modal title and button
+    document.getElementById('event-modal-title').textContent = 'Edit Event';
+    document.getElementById('save-event-btn').textContent = 'Update Event';
+    
+    document.getElementById('add-event-modal').style.display = 'block';
+}
+
+// Show add event modal
+function showAddEventModal() {
+    currentEditingEventId = null;
+    document.getElementById('event-modal-title').textContent = 'Add New Event';
+    document.getElementById('save-event-btn').textContent = 'Add Event';
+    clearEventForm();
+    document.getElementById('add-event-modal').style.display = 'block';
+}
+
+// Close add event modal
+function closeAddEventModal() {
+    document.getElementById('add-event-modal').style.display = 'none';
+    currentEditingEventId = null;
+    clearEventForm();
+}
+
+// Clear event form
+function clearEventForm() {
+    document.getElementById('event-name').value = '';
+    document.getElementById('event-track').value = '';
+    document.getElementById('event-date').value = '';
+    document.getElementById('event-date-display').value = '';
+    document.getElementById('event-location').value = '';
+}
+
+// Update event date range display
+function updateEventDateRange() {
+    const startDate = document.getElementById('event-date').value;
+    if (!startDate) {
+        document.getElementById('event-date-display').value = '';
+        return;
+    }
+
+    const start = new Date(startDate);
+    // Add 2 days to get to Sunday (Friday -> Sunday)
+    const end = new Date(start);
+    end.setDate(start.getDate() + 2);
+    
+    const startFormatted = start.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
+    const endFormatted = end.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
+    
+    document.getElementById('event-date-display').value = `${startFormatted} - ${endFormatted}`;
+}
+
+// Save event data
+async function saveEventData() {
+    const name = document.getElementById('event-name').value;
+    const track = document.getElementById('event-track').value;
+    const date = document.getElementById('event-date').value;
+    const location = document.getElementById('event-location').value;
+
+    if (!name || !track || !date || !location) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    const event = {
+        id: currentEditingEventId || 'custom-' + Date.now(),
+        name,
+        track,
+        date,
+        location
+    };
+
+    try {
+        await apiCall('save-event', {
+            method: 'POST',
+            body: JSON.stringify(event)
+        });
+
+        if (currentEditingEventId) {
+            // Update existing event in array
+            const eventIndex = events.findIndex(e => e.id === currentEditingEventId);
+            if (eventIndex !== -1) {
+                events[eventIndex] = event;
+            }
+            alert('Event updated successfully!');
+        } else {
+            // Add new event to array
+            events.push(event);
+            alert('Event added successfully!');
+        }
+
+        updateEventDropdown();
+        displayEventsList();
+        closeAddEventModal();
+    } catch (error) {
+        console.error('Error saving event:', error);
+        alert('Error saving event. Please try again.');
+    }
+}
+
+// Delete event
+async function deleteEvent(eventId) {
+    if (confirm('Are you sure you want to delete this event?')) {
+        try {
+            await apiCall(`delete-event?id=${eventId}`, {
+                method: 'DELETE'
+            });
+
+            events = events.filter(e => e.id !== eventId);
+            
+            // Clear state if deleted event was selected
+            if (currentEvent === eventId) {
+                currentEvent = null;
+                document.getElementById('event-select').value = '';
+                document.getElementById('main-content').style.display = 'none';
+                saveAppState();
+            }
+            
+            updateEventDropdown();
+            displayEventsList();
+            alert('Event deleted successfully!');
+        } catch (error) {
+            console.error('Error deleting event:', error);
+            alert('Error deleting event. Please try again.');
+        }
+    }
+}
+
+// Tire management functions
+function showTireModal() {
+    document.getElementById('tire-modal').style.display = 'block';
+    displayTireList();
+}
+
+function closeTireModal() {
+    document.getElementById('tire-modal').style.display = 'none';
+}
+
+// Load tires from database
+async function loadTires() {
+    try {
+        const response = await apiCall('get-tires');
+        tires = response.tires || [];
+        updateTireDropdowns();
+    } catch (error) {
+        console.error('Error loading tires:', error);
+        tires = [];
+    }
+}
+
+// Update tire dropdowns
+function updateTireDropdowns() {
+    const frontSelect = document.getElementById('front-tire');
+    const rearSelect = document.getElementById('rear-tire');
+    
+    frontSelect.innerHTML = '<option value="">Select tire...</option>';
+    rearSelect.innerHTML = '<option value="">Select tire...</option>';
+    
+    tires.forEach(tire => {
+        const optionText = `${tire.brand} ${tire.type} ${tire.size}`;
+        
+        const frontOption = document.createElement('option');
+        frontOption.value = tire.id;
+        frontOption.textContent = optionText;
+        frontSelect.appendChild(frontOption);
+        
+        const rearOption = document.createElement('option');
+        rearOption.value = tire.id;
+        rearOption.textContent = optionText;
+        rearSelect.appendChild(rearOption);
+    });
+}
+
+// Add new tire
+async function addTire() {
+    const brand = document.getElementById('tire-brand').value;
+    const type = document.getElementById('tire-type').value;
+    const size = document.getElementById('tire-size').value;
+    const compound = document.getElementById('tire-compound').value;
+
+    if (!brand || !type || !size) {
+        alert('Please fill in brand, type, and size');
+        return;
+    }
+
+    const tire = {
+        id: `${brand.toLowerCase()}-${type.toLowerCase()}-${Date.now()}`,
+        brand,
+        type,
+        size,
+        compound: compound || ''
+    };
+
+    try {
+        await apiCall('save-tire', {
+            method: 'POST',
+            body: JSON.stringify(tire)
+        });
+
+        // Clear form
+        document.getElementById('tire-size').value = '';
+        document.getElementById('tire-compound').value = '';
+
+        // Reload tires
+        await loadTires();
+        displayTireList();
+        
+        alert('Tire added successfully!');
+    } catch (error) {
+        console.error('Error adding tire:', error);
+        alert('Error adding tire. Please try again.');
+    }
+}
+
+// Display tire list in modal
+function displayTireList() {
+    const container = document.getElementById('tire-display');
+    if (tires.length === 0) {
+        container.innerHTML = '<p>No tires available</p>';
+        return;
+    }
+
+    container.innerHTML = tires.map(tire => `
+        <div style="padding: 5px; border-bottom: 1px solid #eee;">
+            <strong>${tire.brand} ${tire.type}</strong><br>
+            Size: ${tire.size}<br>
+            ${tire.compound ? `Compound: ${tire.compound}` : ''}
+        </div>
+    `).join('');
+}
