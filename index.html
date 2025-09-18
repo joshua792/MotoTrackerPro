@@ -719,8 +719,8 @@
                 <div class="feedback-section" style="background: #f3e5f5; border-color: #9c27b0;">
                     <h4 style="color: #7b1fa2;">RaceStudio3 Data</h4>
                     <div class="form-group">
-                        <label for="rs3-file">Upload .rs3 File</label>
-                        <input type="file" id="rs3-file" accept=".rs3" onchange="handleFileUpload(event)">
+                        <label for="rs3-file">Upload RaceStudio3 CSV Export</label>
+                        <input type="file" id="rs3-file" accept=".csv" onchange="handleFileUpload(event)">
                     </div>
                     <div id="file-status" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
                     <div id="uploaded-files" style="margin-top: 10px;"></div>
@@ -871,7 +871,7 @@
     <div id="add-event-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeAddEventModal()">&times;</span>
-            <div class="modal-header">Add New Event</div>
+            <div class="modal-header" id="event-modal-title">Add New Event</div>
             
             <div class="form-group">
                 <label for="event-name">Event Name</label>
@@ -884,8 +884,14 @@
             </div>
             
             <div class="form-group">
-                <label for="event-date">Date</label>
-                <input type="date" id="event-date">
+                <label for="event-date">Weekend Start Date</label>
+                <input type="date" id="event-date" onchange="updateEventDateRange()">
+                <small style="color: #666; font-size: 12px;">End date will be automatically set to Sunday</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="event-date-display">Event Date Range</label>
+                <input type="text" id="event-date-display" readonly style="background: #f8f9fa;" placeholder="Select start date to see range">
             </div>
             
             <div class="form-group">
@@ -894,7 +900,7 @@
             </div>
             
             <div class="action-buttons">
-                <button class="btn btn-primary" onclick="addEvent()">Add Event</button>
+                <button class="btn btn-primary" onclick="saveEventData()" id="save-event-btn">Add Event</button>
                 <button class="btn btn-secondary" onclick="closeAddEventModal()">Cancel</button>
             </div>
         </div>
@@ -1075,8 +1081,8 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            if (!file.name.toLowerCase().endsWith('.rs3')) {
-                alert('Please select a .rs3 file');
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Please select a CSV file');
                 event.target.value = '';
                 return;
             }
@@ -1300,6 +1306,8 @@
         }
 
         // Event management
+        let currentEditingEventId = null;
+
         function displayEventsList() {
             const container = document.getElementById('events-list');
             
@@ -1310,7 +1318,7 @@
             
             container.innerHTML = events.map(event => `
                 <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
+                    <div onclick="editEvent('${event.id}')" style="flex: 1; cursor: pointer;">
                         <strong>${event.name}</strong><br>
                         <span style="color: #666;">${event.track} - ${event.location}</span><br>
                         <span style="font-size: 12px; color: #888;">${new Date(event.date).toLocaleDateString()}</span>
@@ -1323,12 +1331,57 @@
             `).join('');
         }
 
+        function editEvent(eventId) {
+            const event = events.find(e => e.id === eventId);
+            if (!event) return;
+
+            currentEditingEventId = eventId;
+            
+            // Populate modal with existing data
+            document.getElementById('event-name').value = event.name;
+            document.getElementById('event-track').value = event.track;
+            document.getElementById('event-date').value = event.date;
+            document.getElementById('event-location').value = event.location;
+            
+            // Update date display
+            updateEventDateRange();
+            
+            // Change modal title and button
+            document.getElementById('event-modal-title').textContent = 'Edit Event';
+            document.getElementById('save-event-btn').textContent = 'Update Event';
+            
+            document.getElementById('add-event-modal').style.display = 'block';
+        }
+
+        function updateEventDateRange() {
+            const startDate = document.getElementById('event-date').value;
+            if (!startDate) {
+                document.getElementById('event-date-display').value = '';
+                return;
+            }
+
+            const start = new Date(startDate);
+            // Add 2 days to get to Sunday (Friday -> Sunday)
+            const end = new Date(start);
+            end.setDate(start.getDate() + 2);
+            
+            const startFormatted = start.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
+            const endFormatted = end.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
+            
+            document.getElementById('event-date-display').value = `${startFormatted} - ${endFormatted}`;
+        }
+
         function showAddEventModal() {
+            currentEditingEventId = null;
+            document.getElementById('event-modal-title').textContent = 'Add New Event';
+            document.getElementById('save-event-btn').textContent = 'Add Event';
+            clearEventForm();
             document.getElementById('add-event-modal').style.display = 'block';
         }
 
         function closeAddEventModal() {
             document.getElementById('add-event-modal').style.display = 'none';
+            currentEditingEventId = null;
             clearEventForm();
         }
 
@@ -1336,10 +1389,11 @@
             document.getElementById('event-name').value = '';
             document.getElementById('event-track').value = '';
             document.getElementById('event-date').value = '';
+            document.getElementById('event-date-display').value = '';
             document.getElementById('event-location').value = '';
         }
 
-        async function addEvent() {
+        async function saveEventData() {
             const name = document.getElementById('event-name').value;
             const track = document.getElementById('event-track').value;
             const date = document.getElementById('event-date').value;
@@ -1351,7 +1405,7 @@
             }
 
             const event = {
-                id: 'custom-' + Date.now(),
+                id: currentEditingEventId || 'custom-' + Date.now(),
                 name,
                 track,
                 date,
@@ -1364,14 +1418,25 @@
                     body: JSON.stringify(event)
                 });
 
-                events.push(event);
+                if (currentEditingEventId) {
+                    // Update existing event in array
+                    const eventIndex = events.findIndex(e => e.id === currentEditingEventId);
+                    if (eventIndex !== -1) {
+                        events[eventIndex] = event;
+                    }
+                    alert('Event updated successfully!');
+                } else {
+                    // Add new event to array
+                    events.push(event);
+                    alert('Event added successfully!');
+                }
+
                 updateEventDropdown();
                 displayEventsList();
                 closeAddEventModal();
-                alert('Event added successfully!');
             } catch (error) {
-                console.error('Error adding event:', error);
-                alert('Error adding event. Please try again.');
+                console.error('Error saving event:', error);
+                alert('Error saving event. Please try again.');
             }
         }
 
