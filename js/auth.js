@@ -235,24 +235,34 @@ function getAuthHeaders() {
 }
 
 // Modify apiCall to include authentication
-const originalApiCall = window.apiCall;
-window.apiCall = async function(endpoint, options = {}) {
-    // Add auth headers if user is logged in
-    if (authToken && !endpoint.startsWith('auth/')) {
-        options.headers = {
-            ...getAuthHeaders(),
-            ...options.headers
-        };
+function wrapApiCall() {
+    if (typeof window.apiCall !== 'function') {
+        console.error('apiCall function not found');
+        return;
     }
 
-    try {
-        return await originalApiCall(endpoint, options);
-    } catch (error) {
-        // If we get a 401 (Unauthorized), the token might be expired
-        if (error.message.includes('401')) {
-            logout();
-            throw new Error('Session expired. Please login again.');
+    const originalApiCall = window.apiCall;
+    window.apiCall = async function(endpoint, options = {}) {
+        // Add auth headers if user is logged in
+        if (authToken && !endpoint.startsWith('auth/')) {
+            options.headers = {
+                ...getAuthHeaders(),
+                ...options.headers
+            };
         }
-        throw error;
-    }
-};
+
+        try {
+            return await originalApiCall(endpoint, options);
+        } catch (error) {
+            // If we get a 401 (Unauthorized), the token might be expired
+            if (error.message.includes('401')) {
+                logout();
+                throw new Error('Session expired. Please login again.');
+            }
+            throw error;
+        }
+    };
+}
+
+// Wrap apiCall when available
+setTimeout(wrapApiCall, 0);
