@@ -7,7 +7,7 @@ let authToken = null;
 // Initialize authentication on page load
 window.addEventListener('DOMContentLoaded', initAuth);
 
-function initAuth() {
+async function initAuth() {
     // Check for existing session
     const token = localStorage.getItem('authToken');
     const user = localStorage.getItem('currentUser');
