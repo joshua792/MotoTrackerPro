@@ -80,10 +80,16 @@ async function login() {
             updateAuthUI();
             closeAuthModal();
 
-            // Load user data
-            await loadAppData();
-
-            alert('Login successful!');
+            // Small delay to ensure token is set
+            setTimeout(async () => {
+                try {
+                    await loadAppData();
+                    alert('Login successful!');
+                } catch (error) {
+                    console.error('Error loading app data:', error);
+                    alert('Login successful, but there was an issue loading data. Please refresh the page.');
+                }
+            }, 100);
         }
     } catch (error) {
         console.error('Login error:', error);
