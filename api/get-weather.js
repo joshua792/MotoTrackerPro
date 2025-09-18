@@ -5,10 +5,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { track } = req.query;
+  const { track, location } = req.query;
+  
+  // Accept either 'track' or 'location' parameter
+  const searchLocation = track || location;
 
-  if (!track) {
-    return res.status(400).json({ error: 'Track parameter is required' });
+  if (!searchLocation) {
+    return res.status(400).json({ error: 'Track or location parameter is required' });
   }
 
   try {
@@ -17,7 +20,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'OpenWeather API key not configured' });
     }
 
-    // First, try to get coordinates for the track from our database
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false }
@@ -25,29 +27,42 @@ export default async function handler(req, res) {
 
     let lat, lon;
 
-    // Try to find track coordinates in our sessions table
-    const trackQuery = `
-      SELECT DISTINCT latitude, longitude 
-      FROM sessions 
-      WHERE LOWER(track) = LOWER($1) 
-      AND latitude IS NOT NULL 
-      AND longitude IS NOT NULL 
-      LIMIT 1
-    `;
+    // Try to find track coordinates in our sessions table first
+    try {
+      const trackQuery = `
+        SELECT DISTINCT latitude, longitude 
+        FROM sessions 
+        WHERE LOWER(track) = LOWER($1) 
+        AND latitude IS NOT NULL 
+        AND longitude IS NOT NULL 
+        LIMIT 1
+      `;
+      
+      const trackResult = await pool.query(trackQuery, [searchLocation]);
+      
+      if (trackResult.rows.length > 0) {
+        lat = trackResult.rows[0].latitude;
+        lon = trackResult.rows[0].longitude;
+      }
+    } catch (dbError) {
+      // If database query fails (e.g., weather columns don't exist), continue to geocoding
+      console.log('Database lookup failed, using geocoding:', dbError.message);
+    }
     
-    const trackResult = await pool.query(trackQuery, [track]);
-    
-    if (trackResult.rows.length > 0) {
-      lat = trackResult.rows[0].latitude;
-      lon = trackResult.rows[0].longitude;
-    } else {
-      // If no coordinates found, try geocoding the track name
-      const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(track)}&limit=1&appid=${apiKey}`;
+    // If no coordinates found in database, try geocoding
+    if (!lat || !lon) {
+      const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchLocation)}&limit=1&appid=${apiKey}`;
       const geocodeResponse = await fetch(geocodeUrl);
+      
+      if (!geocodeResponse.ok) {
+        throw new Error(`Geocoding failed: ${geocodeResponse.status} ${geocodeResponse.statusText}`);
+      }
+      
       const geocodeData = await geocodeResponse.json();
 
       if (!geocodeData || geocodeData.length === 0) {
-        return res.status(404).json({ error: 'Track location not found' });
+        await pool.end();
+        return res.status(404).json({ error: `Location '${searchLocation}' not found` });
       }
 
       lat = geocodeData[0].lat;
