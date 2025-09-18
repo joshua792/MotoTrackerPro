@@ -17,58 +17,27 @@ export default async function handler(req, res) {
       ssl: { rejectUnauthorized: false }
     });
 
-    // First check if weather columns exist
-    const checkColumnsQuery = `
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'sessions' 
-      AND column_name IN ('temperature', 'humidity', 'pressure', 'wind_speed', 'wind_direction', 'conditions', 'cloud_cover', 'latitude', 'longitude')
+    // Use a simple, safe query that only selects known core columns
+    let query = `
+      SELECT 
+        s.id, s.date, s.track, s.session_type, s.notes, s.created_at,
+        s.motorcycle_id, s.tire_id, s.event_id,
+        s.front_compression, s.front_rebound, s.front_preload,
+        s.rear_compression, s.rear_rebound, s.rear_preload,
+        s.front_tire_pressure, s.rear_tire_pressure,
+        s.front_ride_height, s.rear_ride_height, s.fork_height,
+        m.name as motorcycle_name,
+        m.year as motorcycle_year,
+        t.compound as tire_compound,
+        t.front_size as tire_front_size,
+        t.rear_size as tire_rear_size,
+        e.name as event_name
+      FROM sessions s
+      LEFT JOIN motorcycles m ON s.motorcycle_id = m.id
+      LEFT JOIN tires t ON s.tire_id = t.id
+      LEFT JOIN events e ON s.event_id = e.id
+      WHERE LOWER(s.track) = LOWER($1)
     `;
-    
-    const columnCheck = await pool.query(checkColumnsQuery);
-    const hasWeatherColumns = columnCheck.rows.length > 0;
-
-    // Build query to find previous sessions at this track
-    let query;
-    if (hasWeatherColumns) {
-      query = `
-        SELECT 
-          s.*,
-          m.name as motorcycle_name,
-          m.year as motorcycle_year,
-          t.compound as tire_compound,
-          t.front_size as tire_front_size,
-          t.rear_size as tire_rear_size,
-          e.name as event_name
-        FROM sessions s
-        LEFT JOIN motorcycles m ON s.motorcycle_id = m.id
-        LEFT JOIN tires t ON s.tire_id = t.id
-        LEFT JOIN events e ON s.event_id = e.id
-        WHERE LOWER(s.track) = LOWER($1)
-      `;
-    } else {
-      // Fallback query without weather columns
-      query = `
-        SELECT 
-          s.id, s.date, s.track, s.session_type, s.notes, s.created_at,
-          s.motorcycle_id, s.tire_id, s.event_id,
-          s.front_compression, s.front_rebound, s.front_preload,
-          s.rear_compression, s.rear_rebound, s.rear_preload,
-          s.front_tire_pressure, s.rear_tire_pressure,
-          s.front_ride_height, s.rear_ride_height, s.fork_height,
-          m.name as motorcycle_name,
-          m.year as motorcycle_year,
-          t.compound as tire_compound,
-          t.front_size as tire_front_size,
-          t.rear_size as tire_rear_size,
-          e.name as event_name
-        FROM sessions s
-        LEFT JOIN motorcycles m ON s.motorcycle_id = m.id
-        LEFT JOIN tires t ON s.tire_id = t.id
-        LEFT JOIN events e ON s.event_id = e.id
-        WHERE LOWER(s.track) = LOWER($1)
-      `;
-    }
 
     const params = [track];
 
