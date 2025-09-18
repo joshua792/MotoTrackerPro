@@ -472,6 +472,10 @@
             <div style="position: absolute; top: 20px; right: 20px;">
                 <button class="btn btn-secondary btn-small" onclick="showSettingsModal()">Settings</button>
             </div>
+            <!-- Temporary DB Setup Button - Remove after running once -->
+            <div style="position: absolute; bottom: 10px; left: 20px;">
+                <button onclick="addWeatherColumns()" style="background: red; color: white; padding: 8px 12px; border: none; border-radius: 5px; font-size: 12px;">Add Weather Columns (Click Once Only)</button>
+            </div>
         </div>
 
         <div class="top-controls">
@@ -978,6 +982,22 @@
             'warmup': 'Warmup',
             'race2': 'Race 2'
         };
+
+        // Database setup functions (remove after running once)
+        async function addWeatherColumns() {
+            try {
+                const response = await fetch('/api/add-weather-columns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+                alert('Weather columns added: ' + result.message);
+                console.log('Weather columns setup complete');
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error('Weather setup error:', error);
+            }
+        }
 
         // API helper functions
         async function apiCall(endpoint, options = {}) {
