@@ -20,18 +20,9 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'OpenWeather API key not configured' });
     }
 
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
-
-    let lat, lon;
-
-    // Since your sessions table doesn't have track columns but has lat/lon,
-    // we'll skip database lookup and go straight to geocoding
-    console.log('Skipping database lookup - using geocoding for:', searchLocation);
+    console.log('Getting weather for location:', searchLocation);
     
-    // Try geocoding the location name
+    // Use geocoding to find coordinates
     const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchLocation)}&limit=1&appid=${apiKey}`;
     const geocodeResponse = await fetch(geocodeUrl);
     
@@ -42,12 +33,11 @@ module.exports = async function handler(req, res) {
     const geocodeData = await geocodeResponse.json();
 
     if (!geocodeData || geocodeData.length === 0) {
-      await pool.end();
       return res.status(404).json({ error: `Location '${searchLocation}' not found` });
     }
 
-    lat = geocodeData[0].lat;
-    lon = geocodeData[0].lon;
+    const lat = geocodeData[0].lat;
+    const lon = geocodeData[0].lon;
 
     // Get current weather
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
@@ -70,18 +60,18 @@ module.exports = async function handler(req, res) {
       longitude: lon
     };
 
-    await pool.end();
-
     res.json({
       success: true,
-      weather
+      weather,
+      location: searchLocation
     });
 
   } catch (error) {
     console.error('Weather API error:', error);
     res.status(500).json({ 
       error: 'Failed to fetch weather data',
-      details: error.message 
+      details: error.message,
+      location: searchLocation
     });
   }
-}
+};
