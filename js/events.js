@@ -14,7 +14,7 @@ async function loadEvents() {
     }
 }
 
-// Update event dropdown
+// Update event dropdown and load track map
 function updateEventDropdown() {
     const select = document.getElementById('event-select');
     select.innerHTML = '<option value="">Select an event...</option>';
@@ -25,6 +25,53 @@ function updateEventDropdown() {
         option.textContent = `${event.date.split('-')[1]}/${event.date.split('-')[2]} - ${event.location}`;
         select.appendChild(option);
     });
+}
+
+// Load track map based on selected event
+function loadTrackMap(eventId) {
+    const event = events.find(e => e.id === eventId);
+    const container = document.getElementById('track-map-container');
+    
+    if (!event) {
+        container.innerHTML = `
+            <div class="track-map-placeholder">
+                <p>Select an event to view track map</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Track map URLs - you can expand this database
+    const trackMaps = {
+        'road america': 'https://www.roadamerica.com/sites/default/files/Track-Map-2019.png',
+        'laguna seca': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Laguna_Seca_Raceway_track_map.svg/1200px-Laguna_Seca_Raceway_track_map.svg.png',
+        'cota': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Circuit_of_the_Americas_track_map.svg/1200px-Circuit_of_the_Americas_track_map.svg.png',
+        'barber motorsports park': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Barber_Motorsports_Park_track_map.svg/1200px-Barber_Motorsports_Park_track_map.svg.png',
+        'virginia international raceway': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/VIRtrack.svg/1200px-VIRtrack.svg.png',
+        'new jersey motorsports park': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/New_Jersey_Motorsports_Park_Thunderbolt_Raceway_track_map.svg/1200px-New_Jersey_Motorsports_Park_Thunderbolt_Raceway_track_map.svg.png'
+    };
+
+    const trackKey = event.track.toLowerCase();
+    const mapUrl = trackMaps[trackKey];
+
+    if (mapUrl) {
+        container.innerHTML = `
+            <div>
+                <h4 style="margin-bottom: 10px; color: #2c5aa0;">${event.track}</h4>
+                <img src="${mapUrl}" alt="${event.track} Track Map" class="track-map" 
+                     onerror="this.parentElement.innerHTML='<div class=\\'track-map-placeholder\\'><p>Track map not available for ${event.track}</p></div>'"
+                     style="width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px; border: 1px solid #ddd;">
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="track-map-placeholder">
+                <h4 style="margin-bottom: 10px; color: #2c5aa0;">${event.track}</h4>
+                <p>Track map not available</p>
+                <small style="color: #666;">You can add track maps by updating the trackMaps object in events.js</small>
+            </div>
+        `;
+    }
 }
 
 // Settings modal functions

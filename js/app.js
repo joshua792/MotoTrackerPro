@@ -128,12 +128,15 @@ function updateUnitLabels() {
     });
 }
 
-// Check if main content should be shown
+// Check if main content should be shown and load track map
 async function checkShowMainContent() {
     currentEvent = document.getElementById('event-select').value;
     
     // Save state whenever event changes
     saveAppState();
+    
+    // Load track map when event is selected
+    loadTrackMap(currentEvent);
     
     if (currentMotorcycle && currentEvent) {
         document.getElementById('main-content').style.display = 'block';

@@ -39,14 +39,18 @@ function changeValue(inputId, change, min, max, step) {
     input.value = currentValue;
 }
 
-// Toggle collapsible sections
+// Toggle collapsible sections with improved icon handling
 function toggleCollapsible(element) {
     element.classList.toggle('active');
     const content = element.nextElementSibling;
+    const icon = element.querySelector('.collapsible-icon');
+    
     if (content.style.display === 'block') {
         content.style.display = 'none';
+        if (icon) icon.textContent = '+';
     } else {
         content.style.display = 'block';
+        if (icon) icon.textContent = '−';
     }
 }
 

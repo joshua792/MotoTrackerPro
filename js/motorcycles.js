@@ -13,7 +13,7 @@ async function loadMotorcycles() {
     }
 }
 
-// Update motorcycle display
+// Update motorcycle display with improved layout
 function updateMotorcycleDisplay() {
     const container = document.getElementById('motorcycle-list');
     
@@ -29,11 +29,13 @@ function updateMotorcycleDisplay() {
             <div class="motorcycle-card ${currentMotorcycle && currentMotorcycle.id === moto.id ? 'active' : ''}" 
                  onclick="handleMotorcycleClick('${moto.id}')"
                  ondblclick="handleMotorcycleDoubleClick('${moto.id}')">
-                <div style="font-weight: 600;">#${moto.number} ${moto.variant}</div>
-                <div>${moto.make} ${moto.model}</div>
-                <div style="font-size: 10px; color: #666;">${moto.class}</div>
+                <div class="motorcycle-number">#${moto.number}${moto.variant}</div>
+                <div class="motorcycle-info">
+                    <div class="motorcycle-make-model">${moto.make} ${moto.model}</div>
+                    <div class="motorcycle-class">${moto.class}</div>
+                </div>
                 <button onclick="event.stopPropagation(); deleteMotorcycle('${moto.id}')" 
-                        style="margin-top: 5px; background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; cursor: pointer;">Delete</button>
+                        style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 4px 8px; font-size: 10px; cursor: pointer;">Delete</button>
             </div>
         `).join('');
     }
