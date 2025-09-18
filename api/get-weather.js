@@ -7,8 +7,8 @@ export default async function handler(req, res) {
 
   const { track, location } = req.query;
   
-  // Accept either 'track' or 'location' parameter
-  const searchLocation = track || location;
+  // Accept either 'track' or 'location' parameter and decode if needed
+  const searchLocation = decodeURIComponent(track || location || '');
 
   if (!searchLocation) {
     return res.status(400).json({ error: 'Track or location parameter is required' });
