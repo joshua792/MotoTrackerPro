@@ -16,32 +16,520 @@
             </div>
         </div>
 
-        <div class="top-controls">
-            <div class="event-section">
-                <div class="section-header">
-                    <span class="section-title">Event</span>
+        <!-- Weather Section - Moved to top -->
+        <div class="weather-header">
+            <div id="weather-display" style="display: none;">
+                <div class="weather-grid">
+                    <div><strong>Temp:</strong> <span id="weather-temp">--</span></div>
+                    <div><strong>Condition:</strong> <span id="weather-condition">--</span></div>
+                    <div><strong>Humidity:</strong> <span id="weather-humidity">--</span></div>
+                    <div><strong>Wind:</strong> <span id="weather-wind">--</span></div>
                 </div>
-                <div class="form-group">
-                    <label for="event-select">Select Event</label>
-                    <select id="event-select">
-                        <option value="">Loading events...</option>
-                    </select>
+                <div class="weather-time">
+                    Last updated: <span id="weather-time">--</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="captureWeather()" id="capture-weather-btn">Capture Weather</button>
+        </div>
+
+        <div class="top-controls">
+            <div class="left-panel">
+                <!-- Event Section -->
+                <div class="event-section">
+                    <div class="section-header">
+                        <span class="section-title">Event</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-select">Select Event</label>
+                        <select id="event-select">
+                            <option value="">Loading events...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Motorcycle Section -->
+                <div class="motorcycle-section">
+                    <div class="section-header">
+                        <span class="section-title">Motorcycles</span>
+                        <button class="btn btn-primary btn-small" onclick="showAddMotorcycleModal()">+ Add Motorcycle</button>
+                    </div>
+                    <div id="motorcycle-list" class="motorcycle-grid">
+                        <div class="empty-state">
+                            <h3>No motorcycles added</h3>
+                            <p>Click "Add Motorcycle" to get started</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="motorcycle-section">
+            <!-- Track Map Section -->
+            <div class="track-map-section">
                 <div class="section-header">
-                    <span class="section-title">Motorcycles</span>
-                    <button class="btn btn-primary btn-small" onclick="showAddMotorcycleModal()">+ Add Motorcycle</button>
+                    <span class="section-title">Track Map</span>
                 </div>
-                <div id="motorcycle-list" class="motorcycle-grid">
-                    <div class="empty-state">
-                        <h3>No motorcycles added</h3>
-                        <p>Click "Add Motorcycle" to get started</p>
+                <div id="track-map-container">
+                    <div class="track-map-placeholder">
+                        <p>Select an event to view track map</p>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div id="main-content" style="display: none;">
+            <div class="session-tabs">
+                <button class="session-tab active" onclick="switchSession('practice1')">Practice 1</button>
+                <button class="session-tab" onclick="switchSession('qualifying1')">Qualifying 1</button>
+                <button class="session-tab" onclick="switchSession('qualifying2')">Qualifying 2</button>
+                <button class="session-tab" onclick="switchSession('race1')">Race 1</button>
+                <button class="session-tab" onclick="switchSession('warmup')">Warmup</button>
+                <button class="session-tab" onclick="switchSession('race2')">Race 2</button>
+            </div>
+
+            <div class="session-content">
+                <!-- Collapsible Setup Section -->
+                <button class="collapsible active" onclick="toggleCollapsible(this)">
+                    <span class="collapsible-icon">−</span>
+                    Setup Configuration
+                </button>
+                <div class="collapsible-content" style="display: block;">
+                    <div class="setup-grid">
+                        <div class="setup-section">
+                            <h3>Front</h3>
+                            <div class="setup-fields">
+                                <div class="input-group">
+                                    <label>Spring Rate:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('front-spring', -0.5, 5.0, 15.0, 0.5)">−</button>
+                                        <input type="number" id="front-spring" class="number-input" min="5.0" max="15.0" step="0.5" placeholder="5.0">
+                                        <button class="increment-btn" onclick="changeValue('front-spring', 0.5, 5.0, 15.0, 0.5)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Preload (mm):</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('front-preload', -1, 0, 20, 1)">−</button>
+                                        <input type="number" id="front-preload" class="number-input" min="0" max="20" step="1" placeholder="0">
+                                        <button class="increment-btn" onclick="changeValue('front-preload', 1, 0, 20, 1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Compression:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('front-compression', -1, 0, 50, 1)">−</button>
+                                        <input type="number" id="front-compression" class="number-input" min="0" max="50" step="1" placeholder="0">
+                                        <button class="increment-btn" onclick="changeValue('front-compression', 1, 0, 50, 1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Rebound:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('front-rebound', -1, 0, 50, 1)">−</button>
+                                        <input type="number" id="front-rebound" class="number-input" min="0" max="50" step="1" placeholder="0">
+                                        <button class="increment-btn" onclick="changeValue('front-rebound', 1, 0, 50, 1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Tire:</label>
+                                    <div class="tire-management">
+                                        <select id="front-tire">
+                                            <option value="">Loading tires...</option>
+                                        </select>
+                                        <button class="manage-btn" onclick="showTireModal()">Manage</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>PSI:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('front-pressure', -0.1, 15, 40, 0.1)">−</button>
+                                        <input type="number" id="front-pressure" class="number-input" min="15" max="40" step="0.1" placeholder="15.0">
+                                        <button class="increment-btn" onclick="changeValue('front-pressure', 0.1, 15, 40, 0.1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Rake:</label>
+                                    <input type="text" id="rake" placeholder="Rake angle" style="width: 100px;">
+                                </div>
+                                <div class="input-group">
+                                    <label>Trail:</label>
+                                    <input type="text" id="trail" placeholder="Trail measurement" style="width: 100px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setup-section">
+                            <h3>Rear</h3>
+                            <div class="setup-fields">
+                                <div class="input-group">
+                                    <label>Spring Rate:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('rear-spring', -0.5, 5.0, 15.0, 0.5)">−</button>
+                                        <input type="number" id="rear-spring" class="number-input" min="5.0" max="15.0" step="0.5" placeholder="5.0">
+                                        <button class="increment-btn" onclick="changeValue('rear-spring', 0.5, 5.0, 15.0, 0.5)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Preload (mm):</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('rear-preload', -1, 0, 20, 1)">−</button>
+                                        <input type="number" id="rear-preload" class="number-input" min="0" max="20" step="1" placeholder="0">
+                                        <button class="increment-btn" onclick="changeValue('rear-preload', 1, 0, 20, 1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Compression:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('rear-compression', -1, 0, 50, 1)">−</button>
+                                        <input type="number" id="rear-compression" class="number-input" min="0" max="50" step="1" placeholder="0">
+                                        <button class="increment-btn" onclick="changeValue('rear-compression', 1, 0, 50, 1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Rebound:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('rear-rebound', -1, 0, 50, 1)">−</button>
+                                        <input type="number" id="rear-rebound" class="number-input" min="0" max="50" step="1" placeholder="0">
+                                        <button class="increment-btn" onclick="changeValue('rear-rebound', 1, 0, 50, 1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Tire:</label>
+                                    <div class="tire-management">
+                                        <select id="rear-tire">
+                                            <option value="">Loading tires...</option>
+                                        </select>
+                                        <button class="manage-btn" onclick="showTireModal()">Manage</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>PSI:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('rear-pressure', -0.1, 15, 40, 0.1)">−</button>
+                                        <input type="number" id="rear-pressure" class="number-input" min="15" max="40" step="0.1" placeholder="15.0">
+                                        <button class="increment-btn" onclick="changeValue('rear-pressure', 0.1, 15, 40, 0.1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Front Sprocket:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('front-sprocket', -1, 10, 20, 1)">−</button>
+                                        <input type="number" id="front-sprocket" class="number-input" min="10" max="20" step="1" placeholder="10">
+                                        <button class="increment-btn" onclick="changeValue('front-sprocket', 1, 10, 20, 1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Rear Sprocket:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('rear-sprocket', -1, 30, 60, 1)">−</button>
+                                        <input type="number" id="rear-sprocket" class="number-input" min="30" max="60" step="1" placeholder="30">
+                                        <button class="increment-btn" onclick="changeValue('rear-sprocket', 1, 30, 60, 1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Swingarm (mm):</label>
+                                    <input type="number" id="swingarm-length" min="1" step="1" placeholder="Length in mm" style="width: 100px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="collapsible" onclick="toggleCollapsible(this)">
+                        <span class="collapsible-icon">+</span>
+                        Suspension Geometry
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="setup-grid">
+                            <div class="setup-section">
+                                <h3>Front Geometry</h3>
+                                <div class="setup-fields">
+                                    <div class="input-group">
+                                        <label>Ride Height (mm):</label>
+                                        <input type="number" id="front-ride-height" placeholder="Front ride height" style="width: 100px;">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Sag (mm):</label>
+                                        <input type="number" id="front-sag" placeholder="Front sag" style="width: 100px;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setup-section">
+                                <h3>Rear Geometry</h3>
+                                <div class="setup-fields">
+                                    <div class="input-group">
+                                        <label>Ride Height (mm):</label>
+                                        <input type="number" id="rear-ride-height" placeholder="Rear ride height" style="width: 100px;">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Sag (mm):</label>
+                                        <input type="number" id="rear-sag" placeholder="Rear sag" style="width: 100px;">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Swingarm Angle:</label>
+                                        <input type="text" id="swingarm-angle" placeholder="Swingarm angle" style="width: 100px;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="notes-section">
+                    <div class="form-group">
+                        <label for="notes">Setup Notes</label>
+                        <textarea id="notes" placeholder="Track conditions, setup changes, rider feedback..."></textarea>
+                    </div>
+                </div>
+
+                <div class="feedback-section">
+                    <h4>Post-Session Feedback</h4>
+                    <textarea id="feedback" placeholder="How did the bike feel? What needs to be changed for the next session?"></textarea>
+                </div>
+
+                <div class="feedback-section" style="background: #f3e5f5; border-color: #9c27b0;">
+                    <h4 style="color: #7b1fa2;">RaceStudio3 Data</h4>
+                    <div class="form-group">
+                        <label for="rs3-file">Upload RaceStudio3 CSV Export</label>
+                        <input type="file" id="rs3-file" accept=".csv" onchange="handleFileUpload(event)">
+                    </div>
+                    <div id="file-status" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+                    <div id="uploaded-files" style="margin-top: 10px;"></div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-success" onclick="saveSession()">Save Session</button>
+                    <button class="btn btn-primary" onclick="copyFromPrevious()">Copy from Previous Session</button>
+                    <button class="btn btn-secondary" onclick="clearSession()">Clear All</button>
+                    <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+                    <button class="btn btn-primary" onclick="sendToAI()">AI Analysis</button>
+                </div>
+
+                <div id="saved-data" class="data-display" style="display: none;">
+                    <h4>Session Saved Successfully!</h4>
+                    <p>Data has been saved to browser storage and is ready for analysis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Motorcycle Modal -->
+    <div id="motorcycle-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddMotorcycleModal()">&times;</span>
+            <div class="modal-header">Add New Motorcycle</div>
+            
+            <div class="form-group">
+                <label for="new-make">Make</label>
+                <select id="new-make">
+                    <option value="">Select Make...</option>
+                    <option value="Yamaha">Yamaha</option>
+                    <option value="Honda">Honda</option>
+                    <option value="Kawasaki">Kawasaki</option>
+                    <option value="Suzuki">Suzuki</option>
+                    <option value="Ducati">Ducati</option>
+                    <option value="BMW">BMW</option>
+                    <option value="Aprilia">Aprilia</option>
+                    <option value="KTM">KTM</option>
+                    <option value="Kramer">Kramer</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="new-model">Model</label>
+                <input type="text" id="new-model" placeholder="R1, CBR1000RR, ZX-10R, etc.">
+            </div>
+            
+            <div class="form-group">
+                <label for="new-class">Class</label>
+                <select id="new-class">
+                    <option value="">Select Class...</option>
+                    <option value="Superbike">Superbike</option>
+                    <option value="Stock 1000">Stock 1000</option>
+                    <option value="Supersport">Supersport</option>
+                    <option value="Twins Cup">Twins Cup</option>
+                    <option value="Talent Cup">Talent Cup</option>
+                    <option value="Mini Cup">Mini Cup</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="new-number">Rider Number</label>
+                <input type="text" id="new-number" placeholder="69">
+            </div>
+            
+            <div class="form-group">
+                <label for="new-variant">Bike</label>
+                <select id="new-variant">
+                    <option value="A">A Bike</option>
+                    <option value="B">B Bike</option>
+                </select>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="addMotorcycle()">Add Motorcycle</button>
+                <button class="btn btn-secondary" onclick="closeAddMotorcycleModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close" onclick="closeSettingsModal()">&times;</span>
+            <div class="modal-header">Settings</div>
+            
+            <div style="border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                    <button class="btn btn-secondary" onclick="showSettingsTab('units')" id="units-tab">Units</button>
+                    <button class="btn btn-secondary" onclick="showSettingsTab('events')" id="events-tab">Events</button>
+                    <button class="btn btn-secondary" onclick="showSettingsTab('account')" id="account-tab">Account</button>
+                </div>
+            </div>
+
+            <!-- Units Tab -->
+            <div id="units-settings" class="settings-tab">
+                <h3>Unit Preferences</h3>
+                <div class="form-group">
+                    <label for="pressure-unit">Tire Pressure</label>
+                    <select id="pressure-unit">
+                        <option value="psi">PSI</option>
+                        <option value="bar">Bar</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="temperature-unit">Temperature</label>
+                    <select id="temperature-unit">
+                        <option value="fahrenheit">Fahrenheit (°F)</option>
+                        <option value="celsius">Celsius (°C)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="saveUnitSettings()">Save Units</button>
+            </div>
+
+            <!-- Events Tab -->
+            <div id="events-settings" class="settings-tab" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Event Management</h3>
+                    <button class="btn btn-primary btn-small" onclick="showAddEventModal()">+ Add Event</button>
+                </div>
+                <div id="events-list" style="max-height: 400px; overflow-y: auto;">
+                    Loading events...
+                </div>
+            </div>
+
+            <!-- Account Tab -->
+            <div id="account-settings" class="settings-tab" style="display: none;">
+                <h3>Account Information</h3>
+                <div class="form-group">
+                    <label for="user-name">Name</label>
+                    <input type="text" id="user-name" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                    <label for="user-email">Email</label>
+                    <input type="email" id="user-email" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="user-team">Team</label>
+                    <input type="text" id="user-team" placeholder="Team name">
+                </div>
+                <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Event Modal -->
+    <div id="add-event-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddEventModal()">&times;</span>
+            <div class="modal-header" id="event-modal-title">Add New Event</div>
+            
+            <div class="form-group">
+                <label for="event-name">Event Name</label>
+                <input type="text" id="event-name" placeholder="e.g., MotoAmerica at Road America">
+            </div>
+            
+            <div class="form-group">
+                <label for="event-track">Track</label>
+                <input type="text" id="event-track" placeholder="e.g., Road America">
+            </div>
+            
+            <div class="form-group">
+                <label for="event-date">Weekend Start Date</label>
+                <input type="date" id="event-date" onchange="updateEventDateRange()">
+                <small style="color: #666; font-size: 12px;">End date will be automatically set to Sunday</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="event-date-display">Event Date Range</label>
+                <input type="text" id="event-date-display" readonly style="background: #f8f9fa;" placeholder="Select start date to see range">
+            </div>
+            
+            <div class="form-group">
+                <label for="event-location">Location</label>
+                <input type="text" id="event-location" placeholder="e.g., Elkhart Lake, WI">
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="saveEventData()" id="save-event-btn">Add Event</button>
+                <button class="btn btn-secondary" onclick="closeAddEventModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tire Modal -->
+    <div id="tire-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeTireModal()">&times;</span>
+            <div class="modal-header">Manage Tires</div>
+            
+            <div class="form-group">
+                <label for="tire-brand">Brand</label>
+                <select id="tire-brand">
+                    <option value="Dunlop">Dunlop</option>
+                    <option value="Pirelli">Pirelli</option>
+                    <option value="Bridgestone">Bridgestone</option>
+                    <option value="Michelin">Michelin</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="tire-type">Type</label>
+                <select id="tire-type">
+                    <option value="Slick">Slick</option>
+                    <option value="Wet">Wet</option>
+                    <option value="Intermediate">Intermediate</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="tire-size">Size</label>
+                <input type="text" id="tire-size" placeholder="120/70-17 & 200/55-17">
+            </div>
+            
+            <div class="form-group">
+                <label for="tire-compound">Compound</label>
+                <input type="text" id="tire-compound" placeholder="Medium, Soft, Hard, etc.">
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="addTire()">Add Tire</button>
+                <button class="btn btn-secondary" onclick="closeTireModal()">Close</button>
+            </div>
+            
+            <div id="tire-list" style="margin-top: 20px;">
+                <h4>Current Tires:</h4>
+                <div id="tire-display">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load JavaScript files -->
+    <script src="js/utils.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="js/motorcycles.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/sessions.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
 
         <div id="main-content" style="display: none;">
             <div class="session-tabs">
