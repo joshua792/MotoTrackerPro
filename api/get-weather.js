@@ -29,23 +29,51 @@ export default async function handler(req, res) {
 
     // Try to find track coordinates in our sessions table first
     try {
-      const trackQuery = `
-        SELECT DISTINCT latitude, longitude 
-        FROM sessions 
-        WHERE LOWER(track) = LOWER($1) 
-        AND latitude IS NOT NULL 
-        AND longitude IS NOT NULL 
-        LIMIT 1
+      // Check what columns exist first
+      const columnsQuery = `
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'sessions' 
+        AND column_name IN ('track', 'track_name', 'location', 'latitude', 'longitude')
       `;
       
-      const trackResult = await pool.query(trackQuery, [searchLocation]);
+      const columnsResult = await pool.query(columnsQuery);
+      const availableColumns = columnsResult.rows.map(row => row.column_name);
       
-      if (trackResult.rows.length > 0) {
-        lat = trackResult.rows[0].latitude;
-        lon = trackResult.rows[0].longitude;
+      console.log('Available location columns:', availableColumns);
+
+      // Only try database lookup if we have both location and coordinate columns
+      if (availableColumns.includes('latitude') && availableColumns.includes('longitude')) {
+        let locationColumn = null;
+        if (availableColumns.includes('track')) {
+          locationColumn = 'track';
+        } else if (availableColumns.includes('track_name')) {
+          locationColumn = 'track_name';
+        } else if (availableColumns.includes('location')) {
+          locationColumn = 'location';
+        }
+
+        if (locationColumn) {
+          const trackQuery = `
+            SELECT DISTINCT latitude, longitude 
+            FROM sessions 
+            WHERE LOWER(${locationColumn}) = LOWER($1) 
+            AND latitude IS NOT NULL 
+            AND longitude IS NOT NULL 
+            LIMIT 1
+          `;
+          
+          const trackResult = await pool.query(trackQuery, [searchLocation]);
+          
+          if (trackResult.rows.length > 0) {
+            lat = trackResult.rows[0].latitude;
+            lon = trackResult.rows[0].longitude;
+            console.log(`Found coordinates in database: ${lat}, ${lon}`);
+          }
+        }
       }
     } catch (dbError) {
-      // If database query fails (e.g., weather columns don't exist), continue to geocoding
+      // If database query fails, continue to geocoding
       console.log('Database lookup failed, using geocoding:', dbError.message);
     }
     
