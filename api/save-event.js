@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const jwt = require('jsonwebtoken');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,6 +7,18 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Authenticate user
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Access denied. Please login.' });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
+    );
+
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false }
@@ -57,10 +70,27 @@ module.exports = async function handler(req, res) {
       // Continue anyway - columns might already exist
     }
 
+    // Add user_id column if it doesn't exist
+    try {
+      const checkUserIdColumn = `
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = 'events' AND column_name = 'user_id'
+      `;
+      const columnExists = await pool.query(checkUserIdColumn);
+
+      if (columnExists.rows.length === 0) {
+        console.log('Adding user_id column to events table...');
+        await pool.query('ALTER TABLE events ADD COLUMN user_id UUID REFERENCES users(id)');
+      }
+    } catch (alterError) {
+      console.error('Error checking/adding user_id column:', alterError);
+    }
+
     // Use UPSERT (INSERT ... ON CONFLICT ... DO UPDATE)
     const upsertQuery = `
-      INSERT INTO events (id, series, name, track, date, location, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      INSERT INTO events (id, series, name, track, date, location, user_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
       ON CONFLICT (id) DO UPDATE SET
         series = EXCLUDED.series,
         name = EXCLUDED.name,
@@ -71,7 +101,7 @@ module.exports = async function handler(req, res) {
       RETURNING *
     `;
 
-    const result = await pool.query(upsertQuery, [id, series, name, track, date, location]);
+    const result = await pool.query(upsertQuery, [id, series, name, track, date, location, decoded.userId]);
     
     await pool.end();
 

@@ -253,29 +253,41 @@ async function exportData() {
 // Initialize app when page loads
 async function initApp() {
     loadSettings();
-    await Promise.all([
-        loadEvents(),
-        loadTires(),
-        loadMotorcycles()
-    ]);
-    
-    // Restore app state after loading data
-    const stateRestored = loadAppState();
-    
-    await loadSessionData();
-    updateDisplay();
-    updateUnitLabels();
-    
-    // If state was restored, check if main content should be shown
-    if (stateRestored) {
-        await checkShowMainContent();
-    }
-    
-    // Event change handler
+
+    // Authentication check is handled by auth.js initAuth()
+    // Data loading will happen after successful authentication
+
+    // Set up event handlers regardless of auth state
     document.getElementById('event-select').addEventListener('change', checkShowMainContent);
-    
-    // Initial track map load
-    loadTrackMap(currentEvent);
+}
+
+// Load app data after authentication (called from auth.js)
+async function loadAppData() {
+    try {
+        await Promise.all([
+            loadEvents(),
+            loadTires(),
+            loadMotorcycles()
+        ]);
+
+        // Restore app state after loading data
+        const stateRestored = loadAppState();
+
+        await loadSessionData();
+        updateDisplay();
+        updateUnitLabels();
+
+        // If state was restored, check if main content should be shown
+        if (stateRestored) {
+            await checkShowMainContent();
+        }
+
+        // Initial track map load
+        loadTrackMap(currentEvent);
+    } catch (error) {
+        console.error('Error loading app data:', error);
+        // If data loading fails due to auth issues, auth.js will handle logout
+    }
 }
 
 // Initialize app when page loads

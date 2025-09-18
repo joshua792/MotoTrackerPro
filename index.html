@@ -12,7 +12,15 @@
             <h1>Race Setup Tracker</h1>
             <p>Track your motorcycle setup changes throughout race weekend</p>
             <div style="position: absolute; top: 20px; right: 20px;">
-                <button class="btn btn-secondary btn-small" onclick="showSettingsModal()">Settings</button>
+                <div id="auth-header" style="display: none;">
+                    <span id="user-welcome" style="margin-right: 10px; color: #666;"></span>
+                    <button class="btn btn-secondary btn-small" onclick="showSettingsModal()">Settings</button>
+                    <button class="btn btn-secondary btn-small" onclick="logout()" style="margin-left: 5px;">Logout</button>
+                </div>
+                <div id="login-header">
+                    <button class="btn btn-primary btn-small" onclick="showAuthModal('login')">Login</button>
+                    <button class="btn btn-secondary btn-small" onclick="showAuthModal('register')" style="margin-left: 5px;">Register</button>
+                </div>
             </div>
         </div>
 
@@ -557,6 +565,68 @@
     <script src="js/weather.js"></script>
     <script src="js/motorcycles.js"></script>
     <script src="js/events.js"></script>
+    <!-- Authentication Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close" onclick="closeAuthModal()">&times;</span>
+
+            <!-- Login Form -->
+            <div id="login-form">
+                <div class="modal-header">Login</div>
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="login()" style="width: 100%;">Login</button>
+                </div>
+                <div class="form-group" style="text-align: center;">
+                    <a href="#" onclick="showAuthModal('register')" style="color: #2c5aa0; text-decoration: none;">Don't have an account? Register</a>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" style="display: none;">
+                <div class="modal-header">Create Account</div>
+                <div class="form-group">
+                    <label for="register-name">Full Name</label>
+                    <input type="text" id="register-name" placeholder="Your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" placeholder="Password (min 8 characters)" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" placeholder="Confirm password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-team">Team (Optional)</label>
+                    <input type="text" id="register-team" placeholder="Your racing team">
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="register()" style="width: 100%;">Create Account</button>
+                </div>
+                <div class="form-group" style="text-align: center;">
+                    <a href="#" onclick="showAuthModal('login')" style="color: #2c5aa0; text-decoration: none;">Already have an account? Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="js/motorcycles.js"></script>
+    <script src="js/events.js"></script>
     <script src="js/sessions.js"></script>
     <script src="js/app.js"></script>
 </body>
@@ -1032,6 +1102,68 @@
     </div>
 
     <!-- Load JavaScript files -->
+    <script src="js/utils.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="js/motorcycles.js"></script>
+    <script src="js/events.js"></script>
+    <!-- Authentication Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close" onclick="closeAuthModal()">&times;</span>
+
+            <!-- Login Form -->
+            <div id="login-form">
+                <div class="modal-header">Login</div>
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="login()" style="width: 100%;">Login</button>
+                </div>
+                <div class="form-group" style="text-align: center;">
+                    <a href="#" onclick="showAuthModal('register')" style="color: #2c5aa0; text-decoration: none;">Don't have an account? Register</a>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" style="display: none;">
+                <div class="modal-header">Create Account</div>
+                <div class="form-group">
+                    <label for="register-name">Full Name</label>
+                    <input type="text" id="register-name" placeholder="Your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" placeholder="Password (min 8 characters)" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" placeholder="Confirm password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-team">Team (Optional)</label>
+                    <input type="text" id="register-team" placeholder="Your racing team">
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="register()" style="width: 100%;">Create Account</button>
+                </div>
+                <div class="form-group" style="text-align: center;">
+                    <a href="#" onclick="showAuthModal('login')" style="color: #2c5aa0; text-decoration: none;">Already have an account? Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/weather.js"></script>
     <script src="js/motorcycles.js"></script>
