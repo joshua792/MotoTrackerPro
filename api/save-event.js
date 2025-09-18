@@ -20,23 +20,34 @@ module.exports = async function handler(req, res) {
 
     console.log('Saving event:', { id, series, name, track, date, location }); // Debug logging
 
-    // Check if events table has series column, if not add it
+    // Check if events table has required columns, if not add them
     try {
-      const checkSeriesColumn = `
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'events' AND column_name = 'series'
+      const checkColumns = `
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = 'events' AND column_name IN ('series', 'created_at', 'updated_at')
       `;
-      
-      const columnExists = await pool.query(checkSeriesColumn);
-      
-      if (columnExists.rows.length === 0) {
+
+      const existingColumns = await pool.query(checkColumns);
+      const columnNames = existingColumns.rows.map(row => row.column_name);
+
+      if (!columnNames.includes('series')) {
         console.log('Adding series column to events table...');
         await pool.query('ALTER TABLE events ADD COLUMN series VARCHAR(100)');
       }
+
+      if (!columnNames.includes('created_at')) {
+        console.log('Adding created_at column to events table...');
+        await pool.query('ALTER TABLE events ADD COLUMN created_at TIMESTAMP DEFAULT NOW()');
+      }
+
+      if (!columnNames.includes('updated_at')) {
+        console.log('Adding updated_at column to events table...');
+        await pool.query('ALTER TABLE events ADD COLUMN updated_at TIMESTAMP DEFAULT NOW()');
+      }
     } catch (alterError) {
-      console.error('Error checking/adding series column:', alterError);
-      // Continue anyway - column might already exist
+      console.error('Error checking/adding columns:', alterError);
+      // Continue anyway - columns might already exist
     }
 
     // Use UPSERT (INSERT ... ON CONFLICT ... DO UPDATE)
