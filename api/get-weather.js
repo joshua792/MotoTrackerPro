@@ -55,24 +55,43 @@ module.exports = async function handler(req, res) {
     if (!lat || !lon) {
       console.log(`Using geocoding for: ${searchLocation}`);
       
-      const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchLocation)}&limit=1&appid=${apiKey}`;
-      console.log('Geocoding URL:', geocodeUrl.replace(apiKey, 'HIDDEN'));
+      // Try multiple search variations for better geocoding results
+      const searchVariations = [
+        searchLocation,
+        searchLocation.replace(',', ''), // "Austin TX"
+        searchLocation.split(',')[0], // "Austin"
+        `${searchLocation}, USA`, // "Austin, TX, USA"
+        searchLocation.replace(/,\s*TX/i, ', Texas') // "Austin, Texas"
+      ];
       
-      const geocodeResponse = await fetch(geocodeUrl);
-      console.log('Geocoding status:', geocodeResponse.status);
+      let geocodeData = null;
       
-      if (!geocodeResponse.ok) {
-        const geocodeError = await geocodeResponse.text();
-        console.log('Geocoding error:', geocodeError);
-        throw new Error(`Geocoding failed: ${geocodeResponse.status} ${geocodeResponse.statusText}`);
+      for (const variation of searchVariations) {
+        const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(variation)}&limit=1&appid=${apiKey}`;
+        console.log('Trying geocoding with:', variation);
+        
+        const geocodeResponse = await fetch(geocodeUrl);
+        console.log('Geocoding status:', geocodeResponse.status);
+        
+        if (geocodeResponse.ok) {
+          const data = await geocodeResponse.json();
+          console.log('Geocoding data for', variation, ':', data);
+          
+          if (data && data.length > 0) {
+            geocodeData = data;
+            console.log('Found coordinates with variation:', variation);
+            break;
+          }
+        }
       }
-      
-      const geocodeData = await geocodeResponse.json();
-      console.log('Geocoding data:', geocodeData);
 
       if (!geocodeData || geocodeData.length === 0) {
         await pool.end();
-        return res.status(404).json({ error: `Location '${searchLocation}' not found` });
+        return res.status(404).json({ 
+          error: `Location '${searchLocation}' not found`,
+          tried: searchVariations,
+          suggestion: 'Try "Austin, Texas" or just "Austin"'
+        });
       }
 
       lat = geocodeData[0].lat;
