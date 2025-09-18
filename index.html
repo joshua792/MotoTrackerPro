@@ -417,7 +417,7 @@
             <h1>Race Setup Tracker</h1>
             <p>Track your motorcycle setup changes throughout race weekend</p>
         </div>
-<button onclick="setupDatabase()" style="background: red; color: white; padding: 10px;">Setup Database (Click Once Only)</button>
+
         <div class="top-controls">
             <div class="event-section">
                 <div class="section-header">
@@ -604,20 +604,7 @@
             'race2': 'Race 2'
         };
 
-async function setupDatabase() {
-    try {
-        const response = await fetch('/api/create-tables', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        const result = await response.json();
-        alert('Database setup complete: ' + result.message);
-        console.log('Setup result:', result);
-    } catch (error) {
-        alert('Error: ' + error.message);
-        console.error('Setup error:', error);
-    }
-}
+
         
         // API helper functions
         async function apiCall(endpoint, options = {}) {
@@ -1173,5 +1160,6 @@ async function setupDatabase() {
     </script>
 </body>
 </html>
+
 
 
