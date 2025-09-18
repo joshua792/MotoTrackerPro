@@ -8,6 +8,16 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #2c5aa0 0%, #1e3a5f 100%);
     min-height: 100vh;
+    padding:* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #2c5aa0 0%, #1e3a5f 100%);
+    min-height: 100vh;
     padding: 20px;
 }
 
