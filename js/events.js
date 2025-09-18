@@ -590,18 +590,20 @@ function updateEventDateRange() {
 
 // Save event data
 async function saveEventData() {
+    const series = document.getElementById('event-series').value;
     const name = document.getElementById('event-name').value;
     const track = document.getElementById('event-track').value;
     const date = document.getElementById('event-date').value;
     const location = document.getElementById('event-location').value;
 
-    if (!name || !track || !date || !location) {
+    if (!series || !name || !track || !date || !location) {
         alert('Please fill in all fields');
         return;
     }
 
     const event = {
         id: currentEditingEventId || 'custom-' + Date.now(),
+        series,
         name,
         track,
         date,
