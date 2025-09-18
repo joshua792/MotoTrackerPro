@@ -1002,60 +1002,109 @@
         }
 
         // Weather management
-        async function captureWeather() {
-            if (!currentEvent) {
-                alert('Please select an event first');
-                return;
-            }
 
-            const btn = document.getElementById('capture-weather-btn');
-            btn.textContent = 'Capturing...';
-            btn.disabled = true;
+async function captureWeather() {
+    if (!currentEvent) {
+        alert('Please select an event first');
+        return;
+    }
 
-            try {
-                // Get location from current event
-                const event = events.find(e => e.id === currentEvent);
-                if (!event) {
-                    throw new Error('Event not found');
-                }
+    const btn = document.getElementById('capture-weather-btn');
+    btn.textContent = 'Capturing...';
+    btn.disabled = true;
 
-                const response = await apiCall(`get-weather?location=${encodeURIComponent(event.location)}`);
-                currentWeatherData = response.weather;
-
-                displayWeatherData();
-                btn.textContent = 'Refresh Weather';
-                
-            } catch (error) {
-                console.error('Error capturing weather:', error);
-                alert('Could not capture weather data. Please try again.');
-                btn.textContent = 'Capture Weather';
-            } finally {
-                btn.disabled = false;
-            }
+    try {
+        // Get location from current event
+        const event = events.find(e => e.id === currentEvent);
+        if (!event) {
+            throw new Error('Event not found');
         }
 
-        function displayWeatherData() {
-            if (!currentWeatherData) return;
-
-            const tempUnit = settings.temperatureUnit === 'celsius' ? '°C' : '°F';
-            let temperature = currentWeatherData.temperature;
+        // Get user's temperature preference
+        const temperatureUnit = settings.temperatureUnit || 'fahrenheit';
+        
+        const response = await apiCall(`get-weather?location=${encodeURIComponent(event.location)}&units=${temperatureUnit}`);
+        
+        if (response.success) {
+            currentWeatherData = response.weather;
+            currentWeatherData.timestamp = new Date().toISOString();
             
-            // Convert to Celsius if needed
-            if (settings.temperatureUnit === 'celsius') {
-                temperature = Math.round((temperature - 32) * 5/9);
-            }
-
-            document.getElementById('weather-temp').textContent = `${temperature}${tempUnit}`;
-            document.getElementById('weather-condition').textContent = currentWeatherData.condition;
-            document.getElementById('weather-humidity').textContent = `${currentWeatherData.humidity}%`;
-            document.getElementById('weather-wind').textContent = `${currentWeatherData.windSpeed} mph`;
-            document.getElementById('weather-time').textContent = new Date(currentWeatherData.timestamp).toLocaleTimeString();
+            displayWeatherData();
+            btn.textContent = 'Refresh Weather';
             
-            document.getElementById('weather-display').style.display = 'block';
-
-            // Check for weather changes from previous session
-            checkWeatherChanges();
+            console.log('Weather captured successfully:', currentWeatherData);
+        } else {
+            throw new Error(response.error || 'Unknown error');
         }
+        
+    } catch (error) {
+        console.error('Error capturing weather:', error);
+        alert('Could not capture weather data: ' + error.message);
+        btn.textContent = 'Capture Weather';
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// Updated displayWeatherData function to respect unit preferences
+function displayWeatherData() {
+    if (!currentWeatherData) return;
+
+    const tempUnit = settings.temperatureUnit === 'celsius' ? '°C' : '°F';
+    let displayTemperature = currentWeatherData.temperature;
+    
+    // The API now returns the temperature in the requested unit, so no conversion needed
+    // But we should use the specific temperature values if available
+    if (settings.temperatureUnit === 'celsius' && currentWeatherData.temperatureCelsius) {
+        displayTemperature = currentWeatherData.temperatureCelsius;
+    } else if (settings.temperatureUnit === 'fahrenheit' && currentWeatherData.temperatureFahrenheit) {
+        displayTemperature = currentWeatherData.temperatureFahrenheit;
+    }
+
+    document.getElementById('weather-temp').textContent = `${displayTemperature}${tempUnit}`;
+    document.getElementById('weather-condition').textContent = currentWeatherData.conditions || 'Unknown';
+    document.getElementById('weather-humidity').textContent = `${currentWeatherData.humidity}%`;
+    document.getElementById('weather-wind').textContent = `${currentWeatherData.windSpeed} km/h`;
+    document.getElementById('weather-time').textContent = new Date(currentWeatherData.timestamp).toLocaleTimeString();
+    
+    document.getElementById('weather-display').style.display = 'block';
+
+    // Check for weather changes from previous session
+    checkWeatherChanges();
+}
+
+// Updated saveUnitSettings function to refresh weather display when units change
+function saveUnitSettings() {
+    const oldTempUnit = settings.temperatureUnit;
+    
+    settings.pressureUnit = document.getElementById('pressure-unit').value;
+    settings.temperatureUnit = document.getElementById('temperature-unit').value;
+    
+    localStorage.setItem('raceTrackerSettings', JSON.stringify(settings));
+    
+    // Update UI labels based on unit selection
+    updateUnitLabels();
+    
+    // If temperature unit changed and we have weather data, refresh the display
+    if (oldTempUnit !== settings.temperatureUnit && currentWeatherData) {
+        displayWeatherData();
+    }
+    
+    alert('Unit preferences saved!');
+}
+
+// Function to convert existing weather data when units change (backup method)
+function convertWeatherTemperature(temp, fromUnit, toUnit) {
+    if (fromUnit === toUnit) return temp;
+    
+    if (fromUnit === 'celsius' && toUnit === 'fahrenheit') {
+        return Math.round((temp * 9/5) + 32);
+    } else if (fromUnit === 'fahrenheit' && toUnit === 'celsius') {
+        return Math.round((temp - 32) * 5/9);
+    }
+    
+    return temp;
+}
 
         function checkWeatherChanges() {
             const sessions = ['practice1', 'qualifying1', 'qualifying2', 'race1', 'warmup', 'race2'];
@@ -2215,6 +2264,7 @@
     </script>
 </body>
 </html>
+
 
 
 
