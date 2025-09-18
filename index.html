@@ -484,7 +484,7 @@
                 </div>
             </div>
 
-<button onclick="addGeometryColumns()">Add Geometry Columns (Click Once)</button>
+
             
             <div class="motorcycle-section">
                 <div class="section-header">
@@ -840,18 +840,7 @@
             'race2': 'Race 2'
         };
 
-async function addGeometryColumns() {
-    try {
-        const response = await fetch('/api/add-geometry-columns', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        const result = await response.json();
-        alert('Geometry columns added: ' + result.message);
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
-}
+
         
         // API helper functions
         async function apiCall(endpoint, options = {}) {
@@ -1591,4 +1580,5 @@ async function addGeometryColumns() {
     </script>
 </body>
 </html>
+
 
