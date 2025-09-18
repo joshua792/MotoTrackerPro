@@ -5,10 +5,11 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { track, location } = req.query;
+  const { track, location, units } = req.query;
   
   // Accept either 'track' or 'location' parameter and decode if needed
   const searchLocation = decodeURIComponent(track || location || '');
+  const temperatureUnit = units || 'celsius'; // Default to celsius
 
   if (!searchLocation) {
     return res.status(400).json({ error: 'Track or location parameter is required' });
@@ -99,7 +100,7 @@ module.exports = async function handler(req, res) {
       console.log('Coordinates from geocoding:', lat, lon);
     }
 
-    // Get current weather
+    // Get current weather (always use metric, convert in frontend)
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
     console.log('Weather URL:', weatherUrl.replace(apiKey, 'HIDDEN'));
     
@@ -116,8 +117,14 @@ module.exports = async function handler(req, res) {
     const weatherData = await weatherResponse.json();
     console.log('Weather data received:', weatherData);
 
+    // Get temperature in Celsius from API
+    const tempCelsius = weatherData.main?.temp || 0;
+    const tempFahrenheit = (tempCelsius * 9/5) + 32;
+
     const weather = {
-      temperature: Math.round(weatherData.main?.temp || 0),
+      temperature: temperatureUnit === 'fahrenheit' ? Math.round(tempFahrenheit) : Math.round(tempCelsius),
+      temperatureCelsius: Math.round(tempCelsius),
+      temperatureFahrenheit: Math.round(tempFahrenheit),
       humidity: weatherData.main?.humidity || 0,
       pressure: Math.round(weatherData.main?.pressure || 0),
       windSpeed: Math.round((weatherData.wind?.speed || 0) * 3.6), // Convert m/s to km/h
@@ -125,7 +132,8 @@ module.exports = async function handler(req, res) {
       conditions: weatherData.weather?.[0]?.description || 'Unknown',
       cloudCover: weatherData.clouds?.all || 0,
       latitude: lat,
-      longitude: lon
+      longitude: lon,
+      unit: temperatureUnit
     };
 
     await pool.end();
