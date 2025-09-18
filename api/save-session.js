@@ -11,44 +11,12 @@ export default async function handler(req, res) {
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    ssl: { rejectUnauthorized: false }
   });
 
   try {
     await client.connect();
     
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS sessions (
-        id VARCHAR(255) PRIMARY KEY,
-        event_id VARCHAR(100) NOT NULL,
-        motorcycle_id VARCHAR(255) NOT NULL,
-        session_type VARCHAR(50) NOT NULL,
-        front_spring VARCHAR(50),
-        front_preload VARCHAR(50),
-        front_compression VARCHAR(50),
-        front_rebound VARCHAR(50),
-        rear_spring VARCHAR(50),
-        rear_preload VARCHAR(50),
-        rear_compression VARCHAR(50),
-        rear_rebound VARCHAR(50),
-        front_sprocket VARCHAR(50),
-        rear_sprocket VARCHAR(50),
-        swingarm_length VARCHAR(50),
-        front_tire VARCHAR(100),
-        rear_tire VARCHAR(100),
-        front_pressure VARCHAR(50),
-        rear_pressure VARCHAR(50),
-        rake VARCHAR(50),
-        trail VARCHAR(50),
-        notes TEXT,
-        feedback TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
     const sessionData = req.body;
     const sessionId = `${sessionData.event}_${sessionData.motorcycle.id}_${sessionData.session}`;
 
@@ -59,16 +27,20 @@ export default async function handler(req, res) {
         rear_spring, rear_preload, rear_compression, rear_rebound,
         front_sprocket, rear_sprocket, swingarm_length,
         front_tire, rear_tire, front_pressure, rear_pressure,
-        rake, trail, notes, feedback, updated_at
+        rake, trail, notes, feedback,
+        front_ride_height, rear_ride_height, front_sag, rear_sag, swingarm_angle,
+        updated_at
        ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-        $16, $17, $18, $19, $20, $21, $22, $23, CURRENT_TIMESTAMP
+        $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, CURRENT_TIMESTAMP
        ) ON CONFLICT (id) DO UPDATE SET
         front_spring = $5, front_preload = $6, front_compression = $7, front_rebound = $8,
         rear_spring = $9, rear_preload = $10, rear_compression = $11, rear_rebound = $12,
         front_sprocket = $13, rear_sprocket = $14, swingarm_length = $15,
         front_tire = $16, rear_tire = $17, front_pressure = $18, rear_pressure = $19,
-        rake = $20, trail = $21, notes = $22, feedback = $23, updated_at = CURRENT_TIMESTAMP
+        rake = $20, trail = $21, notes = $22, feedback = $23,
+        front_ride_height = $24, rear_ride_height = $25, front_sag = $26, rear_sag = $27, 
+        swingarm_angle = $28, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
       [
         sessionId, sessionData.event, sessionData.motorcycle.id, sessionData.session,
@@ -76,7 +48,9 @@ export default async function handler(req, res) {
         sessionData.rearSpring || '', sessionData.rearPreload || '', sessionData.rearCompression || '', sessionData.rearRebound || '',
         sessionData.frontSprocket || '', sessionData.rearSprocket || '', sessionData.swingarmLength || '',
         sessionData.frontTire || '', sessionData.rearTire || '', sessionData.frontPressure || '', sessionData.rearPressure || '',
-        sessionData.rake || '', sessionData.trail || '', sessionData.notes || '', sessionData.feedback || ''
+        sessionData.rake || '', sessionData.trail || '', sessionData.notes || '', sessionData.feedback || '',
+        sessionData.frontRideHeight || '', sessionData.rearRideHeight || '', sessionData.frontSag || '', sessionData.rearSag || '',
+        sessionData.swingarmAngle || ''
       ]
     );
 
@@ -85,11 +59,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Database error:', error);
-    try {
-      await client.end();
-    } catch (closeError) {
-      console.error('Error closing client:', closeError);
-    }
+    try { await client.end(); } catch {}
     return res.status(500).json({ error: 'Database error', details: error.message });
   }
 }
