@@ -41,37 +41,106 @@ function loadTrackMap(eventId) {
         return;
     }
 
-    // Track map URLs - you can expand this database
+    // More comprehensive track map matching
     const trackMaps = {
+        // Road America variations
         'road america': 'https://www.roadamerica.com/sites/default/files/Track-Map-2019.png',
-        'laguna seca': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Laguna_Seca_Raceway_track_map.svg/1200px-Laguna_Seca_Raceway_track_map.svg.png',
-        'cota': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Circuit_of_the_Americas_track_map.svg/1200px-Circuit_of_the_Americas_track_map.svg.png',
-        'barber motorsports park': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Barber_Motorsports_Park_track_map.svg/1200px-Barber_Motorsports_Park_track_map.svg.png',
-        'virginia international raceway': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/VIRtrack.svg/1200px-VIRtrack.svg.png',
-        'new jersey motorsports park': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/New_Jersey_Motorsports_Park_Thunderbolt_Raceway_track_map.svg/1200px-New_Jersey_Motorsports_Park_Thunderbolt_Raceway_track_map.svg.png'
+        'roadamerica': 'https://www.roadamerica.com/sites/default/files/Track-Map-2019.png',
+        
+        // Laguna Seca variations  
+        'laguna seca': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Laguna_Seca_Raceway_track_map.svg',
+        'weathertech raceway laguna seca': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Laguna_Seca_Raceway_track_map.svg',
+        'mazda raceway laguna seca': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Laguna_Seca_Raceway_track_map.svg',
+        
+        // COTA variations
+        'cota': 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Circuit_of_the_Americas_track_map.svg',
+        'circuit of the americas': 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Circuit_of_the_Americas_track_map.svg',
+        
+        // Barber variations
+        'barber motorsports park': 'https://upload.wikimedia.org/wikipedia/commons/d/d2/Barber_Motorsports_Park_track_map.svg',
+        'barber': 'https://upload.wikimedia.org/wikipedia/commons/d/d2/Barber_Motorsports_Park_track_map.svg',
+        
+        // VIR variations
+        'virginia international raceway': 'https://upload.wikimedia.org/wikipedia/commons/3/36/VIRtrack.svg',
+        'vir': 'https://upload.wikimedia.org/wikipedia/commons/3/36/VIRtrack.svg',
+        
+        // NJMP variations
+        'new jersey motorsports park': 'https://upload.wikimedia.org/wikipedia/commons/f/f1/New_Jersey_Motorsports_Park_Thunderbolt_Raceway_track_map.svg',
+        'njmp': 'https://upload.wikimedia.org/wikipedia/commons/f/f1/New_Jersey_Motorsports_Park_Thunderbolt_Raceway_track_map.svg',
+        
+        // Add more common tracks
+        'daytona': 'https://upload.wikimedia.org/wikipedia/commons/8/8a/Daytona_International_Speedway_road_course_map.svg',
+        'watkins glen': 'https://upload.wikimedia.org/wikipedia/commons/6/60/Watkins_Glen_International_track_map.svg',
+        'atlanta motorsports park': 'https://upload.wikimedia.org/wikipedia/commons/5/50/Atlanta_Motorsports_Park_track_map.svg'
     };
 
-    const trackKey = event.track.toLowerCase();
-    const mapUrl = trackMaps[trackKey];
+    // Try multiple matching strategies
+    const trackKey = event.track.toLowerCase().trim();
+    let mapUrl = trackMaps[trackKey];
+    
+    // If no exact match, try partial matching
+    if (!mapUrl) {
+        const trackKeys = Object.keys(trackMaps);
+        const partialMatch = trackKeys.find(key => 
+            trackKey.includes(key) || key.includes(trackKey)
+        );
+        if (partialMatch) {
+            mapUrl = trackMaps[partialMatch];
+        }
+    }
+
+    console.log('Looking for track map:', trackKey, 'Found:', !!mapUrl);
 
     if (mapUrl) {
         container.innerHTML = `
             <div>
                 <h4 style="margin-bottom: 10px; color: #2c5aa0;">${event.track}</h4>
-                <img src="${mapUrl}" alt="${event.track} Track Map" class="track-map" 
-                     onerror="this.parentElement.innerHTML='<div class=\\'track-map-placeholder\\'><p>Track map not available for ${event.track}</p></div>'"
-                     style="width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px; border: 1px solid #ddd;">
+                <div style="position: relative;">
+                    <img src="${mapUrl}" alt="${event.track} Track Map" class="track-map" 
+                         style="width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px; border: 1px solid #ddd;"
+                         onload="console.log('Track map loaded successfully')"
+                         onerror="handleTrackMapError(this, '${event.track}')">
+                    <div id="map-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 10px; border-radius: 4px; display: none;">
+                        Loading map...
+                    </div>
+                </div>
             </div>
         `;
+        
+        // Show loading indicator briefly
+        const loading = container.querySelector('#map-loading');
+        if (loading) {
+            loading.style.display = 'block';
+            setTimeout(() => loading.style.display = 'none', 2000);
+        }
     } else {
         container.innerHTML = `
             <div class="track-map-placeholder">
                 <h4 style="margin-bottom: 10px; color: #2c5aa0;">${event.track}</h4>
                 <p>Track map not available</p>
-                <small style="color: #666;">You can add track maps by updating the trackMaps object in events.js</small>
+                <small style="color: #666; display: block; margin-top: 10px;">
+                    To add this track map:<br>
+                    1. Find a track map image URL<br>
+                    2. Add it to the trackMaps object in events.js<br>
+                    3. Key: "${trackKey}"
+                </small>
             </div>
         `;
     }
+}
+
+// Handle track map loading errors
+function handleTrackMapError(imgElement, trackName) {
+    console.error('Failed to load track map for:', trackName);
+    imgElement.parentElement.parentElement.innerHTML = `
+        <div class="track-map-placeholder">
+            <h4 style="margin-bottom: 10px; color: #2c5aa0;">${trackName}</h4>
+            <p>Track map failed to load</p>
+            <small style="color: #666;">
+                The image may be blocked by CORS policy or the URL may be invalid.
+            </small>
+        </div>
+    `;
 }
 
 // Settings modal functions

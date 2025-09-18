@@ -227,6 +227,9 @@ async function initApp() {
     
     // Event change handler
     document.getElementById('event-select').addEventListener('change', checkShowMainContent);
+    
+    // Initial track map load
+    loadTrackMap(currentEvent);
 }
 
 // Initialize app when page loads
