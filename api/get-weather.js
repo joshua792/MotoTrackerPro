@@ -20,50 +20,87 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'OpenWeather API key not configured' });
     }
 
-    console.log('Getting weather for location:', searchLocation);
-    
-    // Use geocoding to find coordinates
-    const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchLocation)}&limit=1&appid=${apiKey}`;
-    const geocodeResponse = await fetch(geocodeUrl);
-    
-    if (!geocodeResponse.ok) {
-      throw new Error(`Geocoding failed: ${geocodeResponse.status} ${geocodeResponse.statusText}`);
-    }
-    
-    const geocodeData = await geocodeResponse.json();
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
 
-    if (!geocodeData || geocodeData.length === 0) {
-      return res.status(404).json({ error: `Location '${searchLocation}' not found` });
+    let lat, lon;
+
+    // First try to find coordinates from previous sessions at this track
+    try {
+      const coordQuery = `
+        SELECT DISTINCT s.latitude, s.longitude 
+        FROM sessions s
+        JOIN events e ON s.event_id = e.id
+        WHERE LOWER(e.track) = LOWER($1) 
+        AND s.latitude IS NOT NULL 
+        AND s.longitude IS NOT NULL 
+        LIMIT 1
+      `;
+      
+      const coordResult = await pool.query(coordQuery, [searchLocation]);
+      
+      if (coordResult.rows.length > 0) {
+        lat = coordResult.rows[0].latitude;
+        lon = coordResult.rows[0].longitude;
+        console.log(`Found coordinates in database for ${searchLocation}: ${lat}, ${lon}`);
+      }
+    } catch (dbError) {
+      console.log('Database coordinate lookup failed:', dbError.message);
     }
 
-    const lat = geocodeData[0].lat;
-    const lon = geocodeData[0].lon;
+    // If no coordinates found in database, use geocoding
+    if (!lat || !lon) {
+      console.log(`Using geocoding for: ${searchLocation}`);
+      
+      const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchLocation)}&limit=1&appid=${apiKey}`;
+      const geocodeResponse = await fetch(geocodeUrl);
+      
+      if (!geocodeResponse.ok) {
+        throw new Error(`Geocoding failed: ${geocodeResponse.status} ${geocodeResponse.statusText}`);
+      }
+      
+      const geocodeData = await geocodeResponse.json();
+
+      if (!geocodeData || geocodeData.length === 0) {
+        await pool.end();
+        return res.status(404).json({ error: `Location '${searchLocation}' not found` });
+      }
+
+      lat = geocodeData[0].lat;
+      lon = geocodeData[0].lon;
+    }
 
     // Get current weather
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
     const weatherResponse = await fetch(weatherUrl);
+    
+    if (!weatherResponse.ok) {
+      throw new Error(`Weather API failed: ${weatherResponse.status} ${weatherResponse.statusText}`);
+    }
+    
     const weatherData = await weatherResponse.json();
 
-    if (!weatherResponse.ok) {
-      throw new Error(weatherData.message || 'Failed to fetch weather data');
-    }
-
     const weather = {
-      temperature: Math.round(weatherData.main.temp),
-      humidity: weatherData.main.humidity,
-      pressure: Math.round(weatherData.main.pressure),
-      windSpeed: Math.round(weatherData.wind?.speed * 3.6 || 0), // Convert m/s to km/h
+      temperature: Math.round(weatherData.main?.temp || 0),
+      humidity: weatherData.main?.humidity || 0,
+      pressure: Math.round(weatherData.main?.pressure || 0),
+      windSpeed: Math.round((weatherData.wind?.speed || 0) * 3.6), // Convert m/s to km/h
       windDirection: weatherData.wind?.deg || 0,
-      conditions: weatherData.weather[0]?.description || 'Unknown',
+      conditions: weatherData.weather?.[0]?.description || 'Unknown',
       cloudCover: weatherData.clouds?.all || 0,
       latitude: lat,
       longitude: lon
     };
 
+    await pool.end();
+
     res.json({
       success: true,
       weather,
-      location: searchLocation
+      location: searchLocation,
+      source: lat === coordResult?.rows?.[0]?.latitude ? 'database' : 'geocoding'
     });
 
   } catch (error) {
