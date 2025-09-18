@@ -20,6 +20,10 @@ module.exports = async function handler(req, res) {
 
     console.log('Saving event:', { id, series, name, track, date, location }); // Debug logging
 
+    // Check if this is an update or insert by looking for existing record
+    const existingEvent = await pool.query('SELECT * FROM events WHERE id = $1', [id]);
+    console.log('Existing event found:', existingEvent.rows.length > 0 ? existingEvent.rows[0] : 'none');
+
     // Check if events table has required columns, if not add them
     try {
       const checkColumns = `
@@ -44,6 +48,9 @@ module.exports = async function handler(req, res) {
       if (!columnNames.includes('updated_at')) {
         console.log('Adding updated_at column to events table...');
         await pool.query('ALTER TABLE events ADD COLUMN updated_at TIMESTAMP DEFAULT NOW()');
+
+        // Update existing records to have the current timestamp
+        await pool.query('UPDATE events SET updated_at = NOW() WHERE updated_at IS NULL');
       }
     } catch (alterError) {
       console.error('Error checking/adding columns:', alterError);

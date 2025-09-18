@@ -522,28 +522,6 @@ function displayEventsList() {
     `).join('');
 }
 
-// Edit event
-function editEvent(eventId) {
-    const event = events.find(e => e.id === eventId);
-    if (!event) return;
-
-    currentEditingEventId = eventId;
-    
-    // Populate modal with existing data
-    document.getElementById('event-name').value = event.name;
-    document.getElementById('event-track').value = event.track;
-    document.getElementById('event-date').value = event.date;
-    document.getElementById('event-location').value = event.location;
-    
-    // Update date display
-    updateEventDateRange();
-    
-    // Change modal title and button
-    document.getElementById('event-modal-title').textContent = 'Edit Event';
-    document.getElementById('save-event-btn').textContent = 'Update Event';
-    
-    document.getElementById('add-event-modal').style.display = 'block';
-}
 
 // Show add event modal
 function showAddEventModal() {
