@@ -118,7 +118,16 @@ function editEvent(eventId) {
     document.getElementById('event-series').value = event.series || '';
     document.getElementById('event-name').value = event.name || '';
     document.getElementById('event-track').value = event.track || '';
-    document.getElementById('event-date').value = event.date || '';
+
+    // Convert ISO date to YYYY-MM-DD format for date input
+    if (event.date) {
+        const dateObj = new Date(event.date);
+        const formattedDate = dateObj.toISOString().split('T')[0];
+        document.getElementById('event-date').value = formattedDate;
+    } else {
+        document.getElementById('event-date').value = '';
+    }
+
     document.getElementById('event-location').value = event.location || '';
     
     // Update date display
