@@ -24,23 +24,40 @@
             </div>
         </div>
 
-        <!-- Weather Section - Moved to top -->
-        <div class="weather-header">
-            <div id="weather-display" style="display: none;">
-                <div class="weather-grid">
-                    <div><strong>Temp:</strong> <span id="weather-temp">--</span></div>
-                    <div><strong>Condition:</strong> <span id="weather-condition">--</span></div>
-                    <div><strong>Humidity:</strong> <span id="weather-humidity">--</span></div>
-                    <div><strong>Wind:</strong> <span id="weather-wind">--</span></div>
-                </div>
-                <div class="weather-time">
-                    Last updated: <span id="weather-time">--</span>
-                </div>
+        <!-- Welcome message for unauthenticated users -->
+        <div id="welcome-message" style="display: none; text-align: center; padding: 60px 20px; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #2c5aa0; margin-bottom: 20px;">Welcome to MotoTracker Pro</h1>
+            <p style="font-size: 18px; color: #666; margin-bottom: 30px;">
+                Professional motorcycle race setup tracking and analysis tool for riders and teams.
+            </p>
+            <p style="color: #888; margin-bottom: 30px;">
+                Track your motorcycle setups, analyze session data, and optimize your performance across different tracks and conditions.
+            </p>
+            <div style="margin-top: 40px;">
+                <button class="btn btn-primary" onclick="showAuthModal('login')" style="margin-right: 10px; padding: 12px 24px; font-size: 16px;">Login to Your Account</button>
+                <button class="btn btn-secondary" onclick="showAuthModal('register')" style="padding: 12px 24px; font-size: 16px;">Create New Account</button>
             </div>
-            <button class="btn btn-secondary btn-small" onclick="captureWeather()" id="capture-weather-btn">Capture Weather</button>
         </div>
 
-        <div class="top-controls">
+        <!-- App Content - Hidden when not authenticated -->
+        <div id="app-content" style="display: none;">
+            <!-- Weather Section - Moved to top -->
+            <div class="weather-header">
+                <div id="weather-display" style="display: none;">
+                    <div class="weather-grid">
+                        <div><strong>Temp:</strong> <span id="weather-temp">--</span></div>
+                        <div><strong>Condition:</strong> <span id="weather-condition">--</span></div>
+                        <div><strong>Humidity:</strong> <span id="weather-humidity">--</span></div>
+                        <div><strong>Wind:</strong> <span id="weather-wind">--</span></div>
+                    </div>
+                    <div class="weather-time">
+                        Last updated: <span id="weather-time">--</span>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-small" onclick="captureWeather()" id="capture-weather-btn">Capture Weather</button>
+            </div>
+
+            <div class="top-controls">
             <div class="left-panel">
                 <!-- Event Section -->
                 <div class="event-section">
@@ -322,7 +339,7 @@
                 </div>
             </div>
         </div>
-    </div>
+        </div> <!-- Close app-content wrapper -->
 
     <!-- Add Motorcycle Modal -->
     <div id="motorcycle-modal" class="modal">

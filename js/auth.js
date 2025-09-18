@@ -166,19 +166,21 @@ function updateAuthUI() {
         document.getElementById('login-header').style.display = 'none';
         document.getElementById('auth-header').style.display = 'block';
         document.getElementById('user-welcome').textContent = `Welcome, ${currentUser.name}`;
-        document.getElementById('main-content').style.display = 'block';
+        document.getElementById('app-content').style.display = 'block';
+        document.getElementById('welcome-message').style.display = 'none';
     } else {
         document.getElementById('login-header').style.display = 'block';
         document.getElementById('auth-header').style.display = 'none';
-        document.getElementById('main-content').style.display = 'none';
+        document.getElementById('app-content').style.display = 'none';
+        document.getElementById('welcome-message').style.display = 'block';
     }
 }
 
 // Show login required message
 function showLoginRequired() {
-    const mainContent = document.getElementById('main-content');
-    if (mainContent) {
-        mainContent.style.display = 'none';
+    const appContent = document.getElementById('app-content');
+    if (appContent) {
+        appContent.style.display = 'none';
     }
 
     // Show login prompt
