@@ -40,6 +40,12 @@
                         <span class="section-title">Event</span>
                     </div>
                     <div class="form-group">
+                        <label for="series-select">Race Series</label>
+                        <select id="series-select">
+                            <option value="">Select Series...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="event-select">Select Event</label>
                         <select id="event-select">
                             <option value="">Loading events...</option>
@@ -442,13 +448,30 @@
             <div class="modal-header" id="event-modal-title">Add New Event</div>
             
             <div class="form-group">
+                <label for="event-series">Race Series</label>
+                <select id="event-series">
+                    <option value="">Select Series...</option>
+                    <option value="MotoAmerica">MotoAmerica</option>
+                    <option value="WERA">WERA</option>
+                    <option value="CMRA">CMRA</option>
+                    <option value="AFM">AFM</option>
+                    <option value="CRA">CRA</option>
+                    <option value="NESBA">NESBA</option>
+                    <option value="LRRS">LRRS</option>
+                    <option value="CCS">CCS</option>
+                    <option value="WMRRA">WMRRA</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
                 <label for="event-name">Event Name</label>
-                <input type="text" id="event-name" placeholder="e.g., MotoAmerica at Road America">
+                <input type="text" id="event-name" placeholder="e.g., WERA at Putnam Park">
             </div>
             
             <div class="form-group">
                 <label for="event-track">Track</label>
-                <input type="text" id="event-track" placeholder="e.g., Road America">
+                <input type="text" id="event-track" placeholder="e.g., Putnam Park">
             </div>
             
             <div class="form-group">
@@ -464,7 +487,7 @@
             
             <div class="form-group">
                 <label for="event-location">Location</label>
-                <input type="text" id="event-location" placeholder="e.g., Elkhart Lake, WI">
+                <input type="text" id="event-location" placeholder="e.g., Mt. Meridian, IN">
             </div>
             
             <div class="action-buttons">
