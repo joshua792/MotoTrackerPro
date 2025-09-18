@@ -510,10 +510,11 @@ function displayEventsList() {
         <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
             <div onclick="editEvent('${event.id}')" style="flex: 1; cursor: pointer;">
                 <strong>${event.name}</strong><br>
+                <span style="color: #666; font-weight: 500;">${event.series || 'No Series'}</span><br>
                 <span style="color: #666;">${event.track} - ${event.location}</span><br>
                 <span style="font-size: 12px; color: #888;">${new Date(event.date).toLocaleDateString()}</span>
             </div>
-            <button onclick="deleteEvent('${event.id}')" 
+            <button onclick="deleteEvent('${event.id}')"
                     style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 5px 10px; cursor: pointer;">
                 Delete
             </button>
@@ -611,21 +612,24 @@ async function saveEventData() {
     };
 
     try {
-        await apiCall('save-event', {
+        const response = await apiCall('save-event', {
             method: 'POST',
             body: JSON.stringify(event)
         });
+
+        // Use the event data returned from the API to ensure proper formatting
+        const savedEvent = response.event;
 
         if (currentEditingEventId) {
             // Update existing event in array
             const eventIndex = events.findIndex(e => e.id === currentEditingEventId);
             if (eventIndex !== -1) {
-                events[eventIndex] = event;
+                events[eventIndex] = savedEvent;
             }
             alert('Event updated successfully!');
         } else {
             // Add new event to array
-            events.push(event);
+            events.push(savedEvent);
             alert('Event added successfully!');
         }
 
