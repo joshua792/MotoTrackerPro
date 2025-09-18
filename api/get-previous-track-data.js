@@ -1,6 +1,6 @@
-import { Pool } from 'pg';
+const { Pool } = require('pg');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       ssl: { rejectUnauthorized: false }
     });
 
-    // First, let's check what columns actually exist in the sessions table
+    // Check what columns actually exist in the sessions table
     const columnsQuery = `
       SELECT column_name 
       FROM information_schema.columns 
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     console.log('Available columns in sessions table:', availableColumns);
 
     // Build a safe query using only columns that exist
-    let selectColumns = ['id', 'created_at'];
+    let selectColumns = ['s.id', 's.created_at'];
     let whereClause = '';
     let joinClauses = '';
     
@@ -41,7 +41,8 @@ export default async function handler(req, res) {
       'front_compression', 'front_rebound', 'front_preload',
       'rear_compression', 'rear_rebound', 'rear_preload',
       'front_tire_pressure', 'rear_tire_pressure',
-      'front_ride_height', 'rear_ride_height', 'fork_height'
+      'front_ride_height', 'rear_ride_height', 'fork_height',
+      'latitude', 'longitude'
     ];
     
     possibleColumns.forEach(col => {
@@ -58,13 +59,15 @@ export default async function handler(req, res) {
     } else if (availableColumns.includes('location')) {
       whereClause = 'WHERE LOWER(s.location) = LOWER($1)';
     } else {
-      // If no track column exists, we can't filter by track
+      // Since your table doesn't have track columns, we'll return all sessions
+      // and filter client-side, or return empty for now
       await pool.end();
       return res.json({
         success: true,
         sessions: [],
         message: 'No track column found in database - cannot filter by track',
-        availableColumns: availableColumns
+        availableColumns: availableColumns,
+        suggestion: 'Consider adding a track_name or location column to the sessions table'
       });
     }
 
@@ -110,7 +113,7 @@ export default async function handler(req, res) {
       track: track
     });
   }
-}
+};
 
     const params = [track];
 
