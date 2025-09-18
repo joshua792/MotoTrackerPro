@@ -132,8 +132,9 @@ function saveAccountSettings() {
 
     localStorage.setItem('raceTrackerSettings', JSON.stringify(settings));
 
-    // Update event series dropdown
+    // Update event series dropdown and main event dropdown
     updateEventSeriesDropdown();
+    updateEventDropdown(); // Refresh home page event dropdown with new filtering
 
     alert('Account information saved!');
 }

@@ -57,35 +57,60 @@ function filterEventsBySeries() {
     updateEventDropdown(selectedSeries);
 }
 
-// Update event dropdown with optional series filtering
+// Update event dropdown with filtering by user's race series
 function updateEventDropdown(filterSeries = null) {
     const select = document.getElementById('event-select');
     const currentEvent = select.value; // Preserve selection
-    
+
     select.innerHTML = '<option value="">Select an event...</option>';
-    
-    // Filter events by series if specified
+
+    // Get user's selected race series from settings
+    const userSeries = settings.userRaceSeries || [];
+
+    // Filter events by user's series (unless specific filterSeries is provided)
     let filteredEvents = events;
     if (filterSeries) {
+        // Use specific series filter (for backwards compatibility)
         filteredEvents = events.filter(e => e.series === filterSeries);
+    } else if (userSeries.length > 0) {
+        // Filter by user's selected series
+        filteredEvents = events.filter(e => userSeries.includes(e.series));
     }
-    
+
     // Sort events by date (most recent first)
     filteredEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
+
     filteredEvents.forEach(event => {
         const option = document.createElement('option');
         option.value = event.id;
-        
-        // Better event display with series
-        const dateStr = new Date(event.date).toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric' 
+
+        // Format: Series - Event Name - MM/DD/YYYY - Location
+        const eventDate = new Date(event.date);
+        const dateStr = eventDate.toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric'
         });
-        option.textContent = `${event.series || 'Unknown'} - ${dateStr} - ${event.track}`;
+
+        option.textContent = `${event.series || 'Unknown'} - ${event.name} - ${dateStr} - ${event.location}`;
         select.appendChild(option);
     });
-    
+
+    // Show message if no events match user's series
+    if (filteredEvents.length === 0 && userSeries.length > 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No events found for your selected race series';
+        option.disabled = true;
+        select.appendChild(option);
+    } else if (filteredEvents.length === 0 && userSeries.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Configure race series in Account Settings to see filtered events';
+        option.disabled = true;
+        select.appendChild(option);
+    }
+
     // Restore previous selection if it still exists after filtering
     if (currentEvent) {
         const eventStillExists = filteredEvents.some(e => e.id === currentEvent);
@@ -344,18 +369,6 @@ function handleTrackMapError(imgElement, trackName) {
     `;
 }
 
-// Update event dropdown and load track map
-function updateEventDropdown() {
-    const select = document.getElementById('event-select');
-    select.innerHTML = '<option value="">Select an event...</option>';
-    
-    events.forEach(event => {
-        const option = document.createElement('option');
-        option.value = event.id;
-        option.textContent = `${event.date.split('-')[1]}/${event.date.split('-')[2]} - ${event.location}`;
-        select.appendChild(option);
-    });
-}
 
 // Load track map based on selected event
 function loadTrackMap(eventId) {
