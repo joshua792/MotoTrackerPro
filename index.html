@@ -700,11 +700,38 @@
                     <textarea id="feedback" placeholder="How did the bike feel? What needs to be changed for the next session?"></textarea>
                 </div>
 
+                <div class="feedback-section" style="background: #e3f2fd; border-color: #2196f3;">
+                    <h4 style="color: #1976d2;">Weather Conditions</h4>
+                    <div id="weather-display" style="display: none;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                            <div><strong>Temp:</strong> <span id="weather-temp">--</span></div>
+                            <div><strong>Condition:</strong> <span id="weather-condition">--</span></div>
+                            <div><strong>Humidity:</strong> <span id="weather-humidity">--</span></div>
+                            <div><strong>Wind:</strong> <span id="weather-wind">--</span></div>
+                        </div>
+                        <div style="font-size: 12px; color: #666;">
+                            Last updated: <span id="weather-time">--</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-small" onclick="captureWeather()" id="capture-weather-btn">Capture Weather</button>
+                </div>
+
+                <div class="feedback-section" style="background: #f3e5f5; border-color: #9c27b0;">
+                    <h4 style="color: #7b1fa2;">RaceStudio3 Data</h4>
+                    <div class="form-group">
+                        <label for="rs3-file">Upload .rs3 File</label>
+                        <input type="file" id="rs3-file" accept=".rs3" onchange="handleFileUpload(event)">
+                    </div>
+                    <div id="file-status" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+                    <div id="uploaded-files" style="margin-top: 10px;"></div>
+                </div>
+
                 <div class="action-buttons">
                     <button class="btn btn-success" onclick="saveSession()">Save Session</button>
                     <button class="btn btn-primary" onclick="copyFromPrevious()">Copy from Previous Session</button>
                     <button class="btn btn-secondary" onclick="clearSession()">Clear All</button>
                     <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+                    <button class="btn btn-primary" onclick="sendToAI()">AI Analysis</button>
                 </div>
 
                 <div id="saved-data" class="data-display" style="display: none;">
@@ -933,6 +960,8 @@
             userEmail: '',
             userTeam: ''
         };
+        let currentWeatherData = null;
+        let uploadedFiles = [];
 
         // Session names for display
         const sessionNames = {
@@ -961,7 +990,242 @@
             return response.json();
         }
 
-        // Settings management
+        // Weather management
+        async function captureWeather() {
+            if (!currentEvent) {
+                alert('Please select an event first');
+                return;
+            }
+
+            const btn = document.getElementById('capture-weather-btn');
+            btn.textContent = 'Capturing...';
+            btn.disabled = true;
+
+            try {
+                // Get location from current event
+                const event = events.find(e => e.id === currentEvent);
+                if (!event) {
+                    throw new Error('Event not found');
+                }
+
+                const response = await apiCall(`get-weather?location=${encodeURIComponent(event.location)}`);
+                currentWeatherData = response.weather;
+
+                displayWeatherData();
+                btn.textContent = 'Refresh Weather';
+                
+            } catch (error) {
+                console.error('Error capturing weather:', error);
+                alert('Could not capture weather data. Please try again.');
+                btn.textContent = 'Capture Weather';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function displayWeatherData() {
+            if (!currentWeatherData) return;
+
+            const tempUnit = settings.temperatureUnit === 'celsius' ? '°C' : '°F';
+            let temperature = currentWeatherData.temperature;
+            
+            // Convert to Celsius if needed
+            if (settings.temperatureUnit === 'celsius') {
+                temperature = Math.round((temperature - 32) * 5/9);
+            }
+
+            document.getElementById('weather-temp').textContent = `${temperature}${tempUnit}`;
+            document.getElementById('weather-condition').textContent = currentWeatherData.condition;
+            document.getElementById('weather-humidity').textContent = `${currentWeatherData.humidity}%`;
+            document.getElementById('weather-wind').textContent = `${currentWeatherData.windSpeed} mph`;
+            document.getElementById('weather-time').textContent = new Date(currentWeatherData.timestamp).toLocaleTimeString();
+            
+            document.getElementById('weather-display').style.display = 'block';
+
+            // Check for weather changes from previous session
+            checkWeatherChanges();
+        }
+
+        function checkWeatherChanges() {
+            const sessions = ['practice1', 'qualifying1', 'qualifying2', 'race1', 'warmup', 'race2'];
+            const currentIndex = sessions.indexOf(currentSession);
+            
+            if (currentIndex > 0) {
+                const previousSession = sessions[currentIndex - 1];
+                const previousKey = `${currentEvent}_${currentMotorcycle.id}_${previousSession}`;
+                const previousData = sessionData[previousKey];
+                
+                if (previousData && previousData.weatherCondition && currentWeatherData) {
+                    const prevCondition = previousData.weatherCondition.toLowerCase();
+                    const currentCondition = currentWeatherData.condition.toLowerCase();
+                    
+                    if ((prevCondition.includes('rain') || prevCondition.includes('drizzle')) && 
+                        (!currentCondition.includes('rain') && !currentCondition.includes('drizzle'))) {
+                        alert('Weather Alert: Previous session was wet, current conditions are dry. Consider setup changes.');
+                    } else if ((!prevCondition.includes('rain') && !prevCondition.includes('drizzle')) && 
+                               (currentCondition.includes('rain') || currentCondition.includes('drizzle'))) {
+                        alert('Weather Alert: Conditions have changed to wet. Consider tire and setup changes.');
+                    }
+                }
+            }
+        }
+
+        // File upload management
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.rs3')) {
+                alert('Please select a .rs3 file');
+                event.target.value = '';
+                return;
+            }
+
+            const fileInfo = {
+                name: file.name,
+                size: file.size,
+                uploadedAt: new Date().toISOString(),
+                sessionKey: `${currentEvent}_${currentMotorcycle.id}_${currentSession}`,
+                file: file
+            };
+
+            uploadedFiles.push(fileInfo);
+            displayUploadedFiles();
+            document.getElementById('file-status').innerHTML = `<span style="color: green;">✓ File ready: ${file.name}</span>`;
+        }
+
+        function displayUploadedFiles() {
+            const container = document.getElementById('uploaded-files');
+            const sessionFiles = uploadedFiles.filter(f => 
+                f.sessionKey === `${currentEvent}_${currentMotorcycle.id}_${currentSession}`
+            );
+
+            if (sessionFiles.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                    <strong>Uploaded Files:</strong><br>
+                    ${sessionFiles.map(file => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 5px 0;">
+                            <span>${file.name} (${Math.round(file.size / 1024)}KB)</span>
+                            <button onclick="removeFile('${file.name}')" 
+                                    style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 10px; cursor: pointer;">
+                                Remove
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function removeFile(fileName) {
+            uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+            displayUploadedFiles();
+            
+            // Clear the file input if this was the current file
+            const fileInput = document.getElementById('rs3-file');
+            if (fileInput.files[0] && fileInput.files[0].name === fileName) {
+                fileInput.value = '';
+                document.getElementById('file-status').innerHTML = '';
+            }
+        }
+
+        // Function to send data to AI (placeholder for future implementation)
+        async function sendToAI() {
+            if (!currentMotorcycle || !currentEvent) {
+                alert('Please select an event and motorcycle first');
+                return;
+            }
+
+            const sessionKey = `${currentEvent}_${currentMotorcycle.id}_${currentSession}`;
+            const sessionData = getCurrentSessionData();
+            const sessionFiles = uploadedFiles.filter(f => f.sessionKey === sessionKey);
+
+            if (sessionFiles.length === 0) {
+                alert('Please upload a RaceStudio3 file first');
+                return;
+            }
+
+            // This is where you'd integrate with your existing GPT
+            // For now, just show what would be sent
+            console.log('Data to send to AI:', {
+                sessionData,
+                files: sessionFiles.map(f => ({ name: f.name, size: f.size }))
+            });
+
+            alert('AI integration ready! This will send your session data and RaceStudio3 files to your GPT for analysis.');
+        }
+
+        function getCurrentSessionData() {
+            return {
+                motorcycle: currentMotorcycle,
+                event: events.find(e => e.id === currentEvent),
+                session: currentSession,
+                setupData: sessionData[`${currentEvent}_${currentMotorcycle.id}_${currentSession}`] || {},
+                weatherData: currentWeatherData
+            };
+        }
+        async function loadPreviousTrackData() {
+            if (!currentMotorcycle || !currentEvent) return;
+
+            try {
+                const event = events.find(e => e.id === currentEvent);
+                if (!event) return;
+
+                const response = await apiCall(`get-previous-track-data?motorcycle_id=${currentMotorcycle.id}&track=${encodeURIComponent(event.track)}`);
+                
+                if (response.previousSession) {
+                    const confirmPopulate = confirm(`Found previous data from this track. Pre-populate Practice 1 with your last setup from ${event.track}?`);
+                    
+                    if (confirmPopulate && currentSession === 'practice1') {
+                        populateFromPreviousTrackData(response.previousSession);
+                    }
+                }
+            } catch (error) {
+                if (error.message.includes('404')) {
+                    console.log('No previous data found for this track - that\'s normal for first visits');
+                } else {
+                    console.error('Error loading previous track data:', error);
+                }
+            }
+        }
+
+        function populateFromPreviousTrackData(previousSession) {
+            // Populate setup fields
+            document.getElementById('front-spring').value = previousSession.front_spring || '';
+            document.getElementById('front-preload').value = previousSession.front_preload || '';
+            document.getElementById('front-compression').value = previousSession.front_compression || '';
+            document.getElementById('front-rebound').value = previousSession.front_rebound || '';
+            document.getElementById('rear-spring').value = previousSession.rear_spring || '';
+            document.getElementById('rear-preload').value = previousSession.rear_preload || '';
+            document.getElementById('rear-compression').value = previousSession.rear_compression || '';
+            document.getElementById('rear-rebound').value = previousSession.rear_rebound || '';
+            
+            // Populate geometry
+            document.getElementById('front-ride-height').value = previousSession.front_ride_height || '';
+            document.getElementById('rear-ride-height').value = previousSession.rear_ride_height || '';
+            document.getElementById('front-sag').value = previousSession.front_sag || '';
+            document.getElementById('rear-sag').value = previousSession.rear_sag || '';
+            document.getElementById('swingarm-angle').value = previousSession.swingarm_angle || '';
+            
+            // Populate drivetrain
+            document.getElementById('front-sprocket').value = previousSession.front_sprocket || '';
+            document.getElementById('rear-sprocket').value = previousSession.rear_sprocket || '';
+            document.getElementById('swingarm-length').value = previousSession.swingarm_length || '';
+            
+            // Populate tires and pressures
+            document.getElementById('front-tire').value = previousSession.front_tire || '';
+            document.getElementById('rear-tire').value = previousSession.rear_tire || '';
+            document.getElementById('front-pressure').value = previousSession.front_pressure || '';
+            document.getElementById('rear-pressure').value = previousSession.rear_pressure || '';
+            document.getElementById('rake').value = previousSession.rake || '';
+            document.getElementById('trail').value = previousSession.trail || '';
+            
+            alert('Previous track data loaded! You can now adjust from your last known good setup.');
+        }
         function showSettingsModal() {
             loadSettings();
             document.getElementById('settings-modal').style.display = 'block';
@@ -1541,6 +1805,10 @@
             if (currentMotorcycle && currentEvent) {
                 document.getElementById('main-content').style.display = 'block';
                 await loadSessionData();
+                // Load previous track data for Practice 1 if available
+                if (currentSession === 'practice1') {
+                    await loadPreviousTrackData();
+                }
             } else {
                 document.getElementById('main-content').style.display = 'none';
             }
@@ -1597,6 +1865,14 @@
                 rearPressure: document.getElementById('rear-pressure').value || '',
                 rake: document.getElementById('rake').value || '',
                 trail: document.getElementById('trail').value || '',
+                
+                // Weather data
+                weatherTemperature: currentWeatherData ? currentWeatherData.temperature.toString() : '',
+                weatherCondition: currentWeatherData ? currentWeatherData.condition : '',
+                weatherDescription: currentWeatherData ? currentWeatherData.description : '',
+                weatherHumidity: currentWeatherData ? currentWeatherData.humidity.toString() : '',
+                weatherWindSpeed: currentWeatherData ? currentWeatherData.windSpeed.toString() : '',
+                weatherCapturedAt: currentWeatherData ? currentWeatherData.timestamp : '',
                 
                 // Notes and feedback
                 notes: document.getElementById('notes').value || '',
