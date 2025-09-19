@@ -67,6 +67,15 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Error listing users:', error);
+
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
+
     res.status(500).json({
       error: 'Failed to list users',
       details: error.message

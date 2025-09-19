@@ -488,12 +488,15 @@ function showAdminSection(section) {
     // Hide all admin sections
     document.getElementById('admin-users-section').style.display = 'none';
     document.getElementById('admin-tracks-section').style.display = 'none';
+    document.getElementById('admin-series-section').style.display = 'none';
 
     // Remove active class from all admin tab buttons
     document.getElementById('admin-users-tab').classList.remove('btn-primary');
     document.getElementById('admin-users-tab').classList.add('btn-secondary');
     document.getElementById('admin-tracks-tab').classList.remove('btn-primary');
     document.getElementById('admin-tracks-tab').classList.add('btn-secondary');
+    document.getElementById('admin-series-tab').classList.remove('btn-primary');
+    document.getElementById('admin-series-tab').classList.add('btn-secondary');
 
     // Show selected section
     document.getElementById('admin-' + section + '-section').style.display = 'block';
@@ -502,6 +505,8 @@ function showAdminSection(section) {
 
     if (section === 'tracks') {
         loadTracksList();
+    } else if (section === 'series') {
+        loadRaceSeriesList();
     }
 }
 

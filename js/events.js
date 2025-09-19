@@ -27,13 +27,22 @@ function updateSeriesDropdown() {
     
     select.innerHTML = '<option value="">All Series</option>';
     
-    // Add predefined series options
-    const predefinedSeries = [
-        'MotoAmerica', 'WERA', 'CMRA', 'AFM', 'American Flat Track', 'CRA', 'NESBA',
-        'LRRS', 'CCS', 'WMRRA', 'Other'
-    ];
-    
-    const allSeries = [...new Set([...raceSeries, ...predefinedSeries])].sort();
+    // Use centralized race series data if available, otherwise fall back to existing data
+    let availableSeries = [];
+    if (window.raceSeriesData && window.raceSeriesData.length > 0) {
+        // Use centralized race series (only active ones)
+        availableSeries = window.raceSeriesData
+            .filter(series => series.is_active)
+            .map(series => series.name);
+    } else {
+        // Fallback to predefined series for backwards compatibility
+        availableSeries = [
+            'MotoAmerica', 'WERA', 'CMRA', 'AFM', 'American Flat Track', 'CRA', 'NESBA',
+            'LRRS', 'CCS', 'WMRRA', 'Other'
+        ];
+    }
+
+    const allSeries = [...new Set([...raceSeries, ...availableSeries])].sort();
     
     allSeries.forEach(series => {
         const option = document.createElement('option');
