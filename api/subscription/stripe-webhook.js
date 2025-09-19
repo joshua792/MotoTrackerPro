@@ -2,34 +2,52 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 module.exports = async function handler(req, res) {
+  console.log('=== STRIPE WEBHOOK CALLED ===');
+  console.log('Method:', req.method);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+
   if (req.method !== 'POST') {
+    console.log('Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
+      console.log('ERROR: Stripe configuration missing');
       return res.status(500).json({ error: 'Stripe configuration missing' });
     }
 
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    console.log('Stripe initialized successfully');
 
     // Verify webhook signature (you'll need to set this in your environment)
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    console.log('Webhook signature present:', !!sig);
+    console.log('Endpoint secret configured:', !!endpointSecret);
 
     let event;
 
     if (endpointSecret) {
       try {
         event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+        console.log('Webhook signature verified successfully');
       } catch (err) {
         console.error('Webhook signature verification failed:', err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
       }
     } else {
       // For testing without webhook signature verification
+      console.log('WARNING: No webhook secret - using raw body');
       event = req.body;
     }
+
+    console.log('Event received:', {
+      id: event.id,
+      type: event.type,
+      created: event.created
+    });
 
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
@@ -60,11 +78,15 @@ module.exports = async function handler(req, res) {
         console.log(`Unhandled event type ${event.type}`);
     }
 
+    console.log('Closing database connection...');
     await pool.end();
+    console.log('Webhook processing completed successfully');
     res.json({ received: true });
 
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('=== WEBHOOK ERROR ===');
+    console.error('Error details:', error);
+    console.error('Stack trace:', error.stack);
     res.status(500).json({
       error: 'Webhook processing failed',
       details: error.message
@@ -74,43 +96,79 @@ module.exports = async function handler(req, res) {
 
 // Handle successful checkout
 async function handleCheckoutCompleted(pool, session) {
-  console.log('Checkout completed:', session.id);
+  console.log('=== HANDLING CHECKOUT COMPLETED ===');
+  console.log('Session ID:', session.id);
+  console.log('Session data:', JSON.stringify(session, null, 2));
 
-  const userId = session.metadata.user_id;
-  const plan = session.metadata.plan;
+  const userId = session.metadata?.user_id;
+  const plan = session.metadata?.plan;
   const stripeCustomerId = session.customer;
   const subscriptionId = session.subscription;
 
+  console.log('Extracted data:', {
+    userId,
+    plan,
+    stripeCustomerId,
+    subscriptionId
+  });
+
   if (!userId || !plan) {
-    console.error('Missing metadata in checkout session');
+    console.error('Missing metadata in checkout session:', {
+      userId: !!userId,
+      plan: !!plan,
+      metadata: session.metadata
+    });
     return;
   }
 
-  // Calculate subscription dates
-  const now = new Date();
-  const subscriptionEndDate = new Date(now);
-  subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+  try {
+    // Calculate subscription dates
+    const now = new Date();
+    const subscriptionEndDate = new Date(now);
+    subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+    console.log('Calculated dates:', { now, subscriptionEndDate });
 
-  // Get plan details from database
-  const planQuery = 'SELECT usage_limit FROM subscription_plans WHERE plan_key = $1';
-  const planResult = await pool.query(planQuery, [plan]);
-  const usageLimit = planResult.rows.length > 0 ? planResult.rows[0].usage_limit : 500;
+    // Get plan details from database
+    console.log('Looking up plan in database:', plan);
+    const planQuery = 'SELECT usage_limit FROM subscription_plans WHERE plan_key = $1';
+    const planResult = await pool.query(planQuery, [plan]);
+    console.log('Plan query result:', planResult.rows);
+    const usageLimit = planResult.rows.length > 0 ? planResult.rows[0].usage_limit : 500;
+    console.log('Usage limit determined:', usageLimit);
 
-  // Update user subscription status
-  await pool.query(`
-    UPDATE users SET
-      subscription_status = 'active',
-      subscription_plan = $1,
-      subscription_start_date = NOW(),
-      subscription_end_date = $2,
-      stripe_customer_id = $3,
-      stripe_subscription_id = $4,
-      usage_limit = $5,
-      updated_at = NOW()
-    WHERE id = $6
-  `, [plan, subscriptionEndDate, stripeCustomerId, subscriptionId, usageLimit, userId]);
+    // Update user subscription status
+    console.log('Updating user subscription in database...');
+    const updateQuery = `
+      UPDATE users SET
+        subscription_status = 'active',
+        subscription_plan = $1,
+        subscription_start_date = NOW(),
+        subscription_end_date = $2,
+        stripe_customer_id = $3,
+        stripe_subscription_id = $4,
+        usage_limit = $5,
+        updated_at = NOW()
+      WHERE id = $6
+    `;
 
-  console.log(`User ${userId} subscription activated: ${plan}`);
+    console.log('Update query params:', [plan, subscriptionEndDate, stripeCustomerId, subscriptionId, usageLimit, userId]);
+
+    const updateResult = await pool.query(updateQuery, [plan, subscriptionEndDate, stripeCustomerId, subscriptionId, usageLimit, userId]);
+
+    console.log('Database update result:', {
+      rowCount: updateResult.rowCount,
+      command: updateResult.command
+    });
+
+    if (updateResult.rowCount === 0) {
+      console.error('WARNING: No rows were updated - user might not exist:', userId);
+    } else {
+      console.log(`SUCCESS: User ${userId} subscription activated: ${plan}`);
+    }
+  } catch (error) {
+    console.error('Error in handleCheckoutCompleted:', error);
+    throw error;
+  }
 }
 
 // Handle successful payment (monthly renewal)
