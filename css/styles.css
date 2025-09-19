@@ -91,7 +91,7 @@ body {
 }
 
 .track-map-section {
-    height: 400px; /* Match the max height of motorcycle section */
+    height: 417px; /* 17px taller */
     overflow: hidden;
 }
 
@@ -281,7 +281,7 @@ body {
 }
 
 .input-group label {
-    min-width: 100px;
+    min-width: 140px;
     font-size: 12px;
     font-weight: 600;
     color: #333;
@@ -768,7 +768,7 @@ body {
 }
 
 .input-group label {
-    min-width: 100px;
+    min-width: 140px;
     font-size: 12px;
     font-weight: 600;
     color: #333;
