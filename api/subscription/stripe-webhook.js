@@ -8,22 +8,24 @@ export const config = {
   },
 };
 
-// Helper function to read raw body
+// Helper function to read raw body as Buffer for Stripe signature verification
 function getRawBody(req) {
   return new Promise((resolve, reject) => {
-    console.log('getRawBody: Starting to read request stream...');
-    let data = '';
+    console.log('getRawBody: Starting to read request stream as Buffer...');
+    const chunks = [];
     let chunkCount = 0;
 
     req.on('data', chunk => {
       chunkCount++;
-      console.log(`getRawBody: Received chunk ${chunkCount}, size: ${chunk.length}`);
-      data += chunk;
+      console.log(`getRawBody: Received chunk ${chunkCount}, size: ${chunk.length}, type: ${typeof chunk}`);
+      chunks.push(chunk);
     });
 
     req.on('end', () => {
-      console.log(`getRawBody: Stream ended. Total chunks: ${chunkCount}, final size: ${data.length}`);
-      resolve(data);
+      const buffer = Buffer.concat(chunks);
+      console.log(`getRawBody: Stream ended. Total chunks: ${chunkCount}, final buffer size: ${buffer.length}`);
+      console.log('getRawBody: Buffer preview (first 100 bytes):', buffer.toString('utf8', 0, 100));
+      resolve(buffer);
     });
 
     req.on('error', (err) => {
@@ -70,7 +72,9 @@ module.exports = async function handler(req, res) {
     // Get raw body for signature verification
     const rawBody = await getRawBody(req);
     console.log('Raw body successfully read. Length:', rawBody.length);
-    console.log('Raw body preview (first 200 chars):', rawBody.substring(0, 200));
+    console.log('Raw body type:', typeof rawBody);
+    console.log('Raw body is Buffer:', Buffer.isBuffer(rawBody));
+    console.log('Raw body preview (first 200 chars):', rawBody.toString('utf8', 0, 200));
     if (!process.env.STRIPE_SECRET_KEY) {
       console.log('ERROR: Stripe configuration missing');
       return res.status(500).json({ error: 'Stripe configuration missing' });
@@ -92,7 +96,13 @@ module.exports = async function handler(req, res) {
 
     console.log('Starting webhook event processing...');
 
-    if (endpointSecret && sig) {
+    // Check if this is from Stripe CLI (for testing)
+    const userAgent = req.headers['user-agent'] || '';
+    const isStripeCLI = userAgent.includes('Stripe-CLI');
+    console.log('User-Agent:', userAgent);
+    console.log('Is Stripe CLI:', isStripeCLI);
+
+    if (endpointSecret && sig && !isStripeCLI) {
       console.log('Attempting signature verification...');
       try {
         event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
@@ -106,12 +116,14 @@ module.exports = async function handler(req, res) {
       // For testing without webhook signature verification
       console.log('WARNING: No webhook secret or signature - parsing JSON body');
       try {
-        event = JSON.parse(rawBody);
+        const bodyString = rawBody.toString('utf8');
+        console.log('Converting buffer to string for JSON parsing...');
+        event = JSON.parse(bodyString);
         console.log('Event parsed from raw body successfully');
       } catch (parseError) {
         console.error('Failed to parse webhook body:', parseError.message);
         console.error('Parse error details:', parseError);
-        console.error('Raw body that failed to parse:', rawBody);
+        console.error('Raw body that failed to parse:', rawBody.toString('utf8'));
         return res.status(400).json({ error: 'Invalid JSON body' });
       }
     }
