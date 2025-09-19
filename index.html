@@ -536,9 +536,14 @@
 
             <!-- Teams Tab -->
             <div id="teams-settings" class="settings-tab" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>Team Management</h3>
-                    <button class="btn btn-primary btn-small" onclick="showCreateTeamModal()" id="create-team-btn">Create Team</button>
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3>Team Management</h3>
+                        <button class="btn btn-primary btn-small" onclick="showCreateTeamModal()" id="create-team-btn">Create Team</button>
+                    </div>
+                    <p style="color: #666; font-size: 14px; margin: 0;">
+                        Teams allow sharing motorcycles and data with multiple users. Requires Premier subscription or Admin access.
+                    </p>
                 </div>
 
                 <!-- Pending Invitations -->
@@ -1053,8 +1058,13 @@
             </div>
 
             <div style="background-color: #e3f2fd; padding: 10px; border-radius: 5px; margin: 15px 0; font-size: 14px;">
-                <strong>Premier Subscription Required:</strong>
-                <p style="margin: 5px 0 0 0;">Creating teams requires an active Premier subscription. You can invite multiple team members to share motorcycles and data.</p>
+                <strong>Team Creation Requirements:</strong>
+                <p style="margin: 5px 0 0 0;">Creating teams requires either:</p>
+                <ul style="margin: 5px 0 0 20px; padding: 0;">
+                    <li>An active Premier subscription, OR</li>
+                    <li>Admin access</li>
+                </ul>
+                <p style="margin: 5px 0 0 0;">Teams allow you to invite multiple members to share motorcycles and data.</p>
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">

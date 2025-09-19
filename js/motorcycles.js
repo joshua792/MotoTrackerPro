@@ -71,6 +71,39 @@ function clearMotorcycleModalFields() {
     document.getElementById('new-variant').value = 'A';
 }
 
+// Update team selector visibility
+function updateTeamSelector() {
+    const ownershipSelect = document.getElementById('motorcycle-ownership');
+    const teamSelectorGroup = document.getElementById('team-selector-group');
+    const teamSelect = document.getElementById('motorcycle-team');
+
+    if (!ownershipSelect || !teamSelectorGroup) return;
+
+    if (ownershipSelect.value === 'team') {
+        teamSelectorGroup.style.display = 'block';
+
+        // Load user teams if not already loaded
+        if (typeof userTeams !== 'undefined' && userTeams.length > 0) {
+            teamSelect.innerHTML = '<option value="">Select a team...</option>' +
+                userTeams.map(team => `<option value="${team.id}">${team.name}</option>`).join('');
+        } else {
+            teamSelect.innerHTML = '<option value="">No teams available</option>';
+
+            // Try to load teams
+            if (typeof loadUserTeams === 'function') {
+                loadUserTeams().then(() => {
+                    if (userTeams && userTeams.length > 0) {
+                        teamSelect.innerHTML = '<option value="">Select a team...</option>' +
+                            userTeams.map(team => `<option value="${team.id}">${team.name}</option>`).join('');
+                    }
+                });
+            }
+        }
+    } else {
+        teamSelectorGroup.style.display = 'none';
+    }
+}
+
 // Add motorcycle
 async function addMotorcycle() {
     const make = document.getElementById('new-make').value;
@@ -78,9 +111,16 @@ async function addMotorcycle() {
     const bikeClass = document.getElementById('new-class').value;
     const number = document.getElementById('new-number').value;
     const variant = document.getElementById('new-variant').value;
+    const ownershipType = document.getElementById('motorcycle-ownership')?.value || 'individual';
+    const teamId = document.getElementById('motorcycle-team')?.value || null;
 
     if (!make || !model || !bikeClass || !number) {
         alert('Please fill in all required fields');
+        return;
+    }
+
+    if (ownershipType === 'team' && !teamId) {
+        alert('Please select a team for team ownership');
         return;
     }
 
@@ -90,7 +130,9 @@ async function addMotorcycle() {
         model: model,
         class: bikeClass,
         number: number,
-        variant: variant
+        variant: variant,
+        ownershipType: ownershipType,
+        teamId: teamId
     };
 
     try {

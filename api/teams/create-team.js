@@ -22,9 +22,9 @@ module.exports = async function handler(req, res) {
       ssl: { rejectUnauthorized: false }
     });
 
-    // Check if user has premier subscription
+    // Check user permissions and subscription
     const userQuery = `
-      SELECT subscription_plan, subscription_status, subscription_end_date
+      SELECT subscription_plan, subscription_status, subscription_end_date, is_admin
       FROM users WHERE id = $1
     `;
     const userResult = await pool.query(userQuery, [decoded.userId]);
@@ -36,21 +36,28 @@ module.exports = async function handler(req, res) {
 
     const user = userResult.rows[0];
 
-    // Check if user has active premier subscription
-    if (user.subscription_plan !== 'premier' || user.subscription_status !== 'active') {
-      await pool.end();
-      return res.status(403).json({
-        error: 'Premier subscription required to create teams',
-        currentPlan: user.subscription_plan,
-        status: user.subscription_status
-      });
-    }
+    // Check if user has permission to create teams (Admin OR Premier subscriber)
+    const isAdmin = user.is_admin === true;
+    const hasPremierSubscription = user.subscription_plan === 'premier' && user.subscription_status === 'active';
+    const hasValidSubscription = !user.subscription_end_date || new Date(user.subscription_end_date) >= new Date();
 
-    // Check if subscription is still valid
-    if (user.subscription_end_date && new Date(user.subscription_end_date) < new Date()) {
+    if (!isAdmin && (!hasPremierSubscription || !hasValidSubscription)) {
       await pool.end();
+
+      let errorMessage = 'Premier subscription or Admin access required to create teams';
+      let errorDetails = {
+        currentPlan: user.subscription_plan,
+        status: user.subscription_status,
+        isAdmin: isAdmin
+      };
+
+      if (user.subscription_plan === 'premier' && !hasValidSubscription) {
+        errorMessage = 'Subscription expired. Please renew to create teams.';
+      }
+
       return res.status(403).json({
-        error: 'Subscription expired. Please renew to create teams.'
+        error: errorMessage,
+        ...errorDetails
       });
     }
 
@@ -80,11 +87,14 @@ module.exports = async function handler(req, res) {
       RETURNING id, name, description, owner_id, subscription_plan, created_at, is_active
     `;
 
+    // Set team subscription plan - admins get premier-level access
+    const teamSubscriptionPlan = isAdmin ? 'premier' : user.subscription_plan;
+
     const teamResult = await pool.query(createTeamQuery, [
       name.trim(),
       description?.trim() || null,
       decoded.userId,
-      user.subscription_plan
+      teamSubscriptionPlan
     ]);
 
     const newTeam = teamResult.rows[0];

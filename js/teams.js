@@ -139,11 +139,35 @@ async function createTeam() {
         }
     } catch (error) {
         console.error('Error creating team:', error);
-        if (error.message.includes('Premier subscription required')) {
-            alert('Premier subscription required to create teams. Please upgrade your subscription.');
+
+        // Parse error details for better user messaging
+        let errorMessage = 'Error creating team';
+
+        if (error.message.includes('API call failed: 403')) {
+            // Try to parse the error details from the API response
+            try {
+                // Extract the JSON error from the error message
+                const match = error.message.match(/\{.*\}/);
+                if (match) {
+                    const errorData = JSON.parse(match[0]);
+
+                    if (errorData.error.includes('Premier subscription') || errorData.error.includes('Admin access')) {
+                        errorMessage = `Team creation requires either:\n• Premier subscription (current: ${errorData.currentPlan || 'unknown'})\n• Admin access (current: ${errorData.isAdmin ? 'Yes' : 'No'})\n\nPlease upgrade your subscription or contact an administrator.`;
+                    } else if (errorData.error.includes('expired')) {
+                        errorMessage = 'Your subscription has expired. Please renew to create teams.';
+                    } else {
+                        errorMessage = errorData.error;
+                    }
+                }
+            } catch (parseError) {
+                // Fallback to generic message
+                errorMessage = 'You need either a Premier subscription or Admin access to create teams.';
+            }
         } else {
-            alert('Error creating team: ' + error.message);
+            errorMessage = 'Error creating team: ' + error.message;
         }
+
+        alert(errorMessage);
     }
 }
 
