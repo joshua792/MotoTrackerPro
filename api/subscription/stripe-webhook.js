@@ -11,21 +11,54 @@ export const config = {
 // Helper function to read raw body
 function getRawBody(req) {
   return new Promise((resolve, reject) => {
+    console.log('getRawBody: Starting to read request stream...');
     let data = '';
+    let chunkCount = 0;
+
     req.on('data', chunk => {
+      chunkCount++;
+      console.log(`getRawBody: Received chunk ${chunkCount}, size: ${chunk.length}`);
       data += chunk;
     });
+
     req.on('end', () => {
+      console.log(`getRawBody: Stream ended. Total chunks: ${chunkCount}, final size: ${data.length}`);
       resolve(data);
     });
-    req.on('error', reject);
+
+    req.on('error', (err) => {
+      console.error('getRawBody: Stream error:', err);
+      reject(err);
+    });
   });
 }
 
 module.exports = async function handler(req, res) {
   console.log('=== STRIPE WEBHOOK CALLED ===');
+  console.log('Timestamp:', new Date().toISOString());
   console.log('Method:', req.method);
+  console.log('URL:', req.url);
   console.log('Headers:', JSON.stringify(req.headers, null, 2));
+
+  // Add response debugging
+  const originalJson = res.json;
+  const originalStatus = res.status;
+  const originalSend = res.send;
+
+  res.status = function(code) {
+    console.log(`RESPONSE STATUS SET TO: ${code}`);
+    return originalStatus.call(this, code);
+  };
+
+  res.json = function(data) {
+    console.log(`RESPONSE JSON:`, JSON.stringify(data, null, 2));
+    return originalJson.call(this, data);
+  };
+
+  res.send = function(data) {
+    console.log(`RESPONSE SEND:`, data);
+    return originalSend.call(this, data);
+  };
 
   if (req.method !== 'POST') {
     console.log('Method not allowed:', req.method);
@@ -33,14 +66,17 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    console.log('Starting to read raw body...');
     // Get raw body for signature verification
     const rawBody = await getRawBody(req);
-    console.log('Raw body length:', rawBody.length);
+    console.log('Raw body successfully read. Length:', rawBody.length);
+    console.log('Raw body preview (first 200 chars):', rawBody.substring(0, 200));
     if (!process.env.STRIPE_SECRET_KEY) {
       console.log('ERROR: Stripe configuration missing');
       return res.status(500).json({ error: 'Stripe configuration missing' });
     }
 
+    console.log('Initializing Stripe...');
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     console.log('Stripe initialized successfully');
 
@@ -49,16 +85,21 @@ module.exports = async function handler(req, res) {
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     console.log('Webhook signature present:', !!sig);
+    console.log('Webhook signature value:', sig ? `${sig.substring(0, 20)}...` : 'none');
     console.log('Endpoint secret configured:', !!endpointSecret);
 
     let event;
 
+    console.log('Starting webhook event processing...');
+
     if (endpointSecret && sig) {
+      console.log('Attempting signature verification...');
       try {
         event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
         console.log('Webhook signature verified successfully');
       } catch (err) {
         console.error('Webhook signature verification failed:', err.message);
+        console.error('Error details:', err);
         return res.status(400).send(`Webhook Error: ${err.message}`);
       }
     } else {
@@ -69,6 +110,8 @@ module.exports = async function handler(req, res) {
         console.log('Event parsed from raw body successfully');
       } catch (parseError) {
         console.error('Failed to parse webhook body:', parseError.message);
+        console.error('Parse error details:', parseError);
+        console.error('Raw body that failed to parse:', rawBody);
         return res.status(400).json({ error: 'Invalid JSON body' });
       }
     }
@@ -114,14 +157,27 @@ module.exports = async function handler(req, res) {
     res.json({ received: true });
 
   } catch (error) {
-    console.error('=== WEBHOOK ERROR ===');
+    console.error('=== WEBHOOK PROCESSING ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
     console.error('Error details:', error);
     console.error('Stack trace:', error.stack);
-    res.status(500).json({
+
+    // Determine appropriate error code
+    let statusCode = 500;
+    if (error.message && error.message.includes('JSON')) {
+      statusCode = 400;
+    }
+
+    console.log(`Returning error response with status ${statusCode}`);
+    res.status(statusCode).json({
       error: 'Webhook processing failed',
-      details: error.message
+      details: error.message,
+      timestamp: new Date().toISOString()
     });
   }
+
+  console.log('=== WEBHOOK HANDLER COMPLETED ===');
 };
 
 // Handle successful checkout
