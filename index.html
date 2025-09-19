@@ -404,6 +404,21 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="motorcycle-ownership">Ownership</label>
+                <select id="motorcycle-ownership" onchange="updateTeamSelector()">
+                    <option value="individual">Individual (Personal motorcycle)</option>
+                    <option value="team">Team (Shared with team members)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="team-selector-group" style="display: none;">
+                <label for="motorcycle-team">Select Team</label>
+                <select id="motorcycle-team">
+                    <option value="">Loading teams...</option>
+                </select>
+            </div>
+
             <div class="action-buttons">
                 <button class="btn btn-primary" onclick="addMotorcycle()">Add Motorcycle</button>
                 <button class="btn btn-secondary" onclick="closeAddMotorcycleModal()">Cancel</button>
@@ -422,6 +437,7 @@
                     <button class="btn btn-secondary" onclick="showSettingsTab('units')" id="units-tab">Units</button>
                     <button class="btn btn-secondary" onclick="showSettingsTab('events')" id="events-tab">Events</button>
                     <button class="btn btn-secondary" onclick="showSettingsTab('motorcycles')" id="motorcycles-tab">Motorcycles</button>
+                    <button class="btn btn-secondary" onclick="showSettingsTab('teams')" id="teams-tab">Teams</button>
                     <button class="btn btn-secondary" onclick="showSettingsTab('account')" id="account-tab">Account</button>
                     <button class="btn btn-secondary" onclick="showSettingsTab('admin')" id="admin-tab" style="display: none;">Admin</button>
                 </div>
@@ -515,6 +531,35 @@
 
                 <div style="margin-top: 20px;">
                     <button class="btn btn-secondary" onclick="changePassword()">Change Password</button>
+                </div>
+            </div>
+
+            <!-- Teams Tab -->
+            <div id="teams-settings" class="settings-tab" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Team Management</h3>
+                    <button class="btn btn-primary btn-small" onclick="showCreateTeamModal()" id="create-team-btn">Create Team</button>
+                </div>
+
+                <!-- Pending Invitations -->
+                <div id="pending-invitations" style="display: none; margin-bottom: 30px;">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <!-- User's Teams -->
+                <div id="teams-list">
+                    <div class="empty-state">
+                        <p>Loading teams...</p>
+                    </div>
+                </div>
+
+                <!-- Team Details -->
+                <div id="team-details" style="display: none; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
+                    <h4 id="team-details-name"></h4>
+                    <p id="team-details-description"></p>
+                    <div id="team-details-actions" style="margin-top: 15px;">
+                        <!-- Team action buttons populated by JavaScript -->
+                    </div>
                 </div>
             </div>
 
@@ -991,6 +1036,64 @@
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/subscription.js"></script>
+    <!-- Create Team Modal -->
+    <div id="create-team-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCreateTeamModal()">&times;</span>
+            <div class="modal-header">Create New Team</div>
+
+            <div class="form-group">
+                <label for="team-name">Team Name</label>
+                <input type="text" id="team-name" placeholder="Enter team name" maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <label for="team-description">Description (optional)</label>
+                <textarea id="team-description" placeholder="Brief description of your team" rows="3" maxlength="500"></textarea>
+            </div>
+
+            <div style="background-color: #e3f2fd; padding: 10px; border-radius: 5px; margin: 15px 0; font-size: 14px;">
+                <strong>Premier Subscription Required:</strong>
+                <p style="margin: 5px 0 0 0;">Creating teams requires an active Premier subscription. You can invite multiple team members to share motorcycles and data.</p>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="createTeam()">Create Team</button>
+                <button class="btn btn-secondary" onclick="closeCreateTeamModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Member Modal -->
+    <div id="invite-member-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeInviteMemberModal()">&times;</span>
+            <div class="modal-header">Invite Team Member</div>
+
+            <div class="form-group">
+                <label for="invite-email">Email Address</label>
+                <input type="email" id="invite-email" placeholder="member@example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="invite-role">Role</label>
+                <select id="invite-role">
+                    <option value="member">Member - Can view and edit team motorcycles</option>
+                    <option value="admin">Admin - Can invite/remove members and manage team</option>
+                </select>
+            </div>
+
+            <div style="background-color: #fff3cd; padding: 10px; border-radius: 5px; margin: 15px 0; font-size: 14px;">
+                <strong>Note:</strong> The invited user will receive an email invitation and must accept it to join the team.
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="inviteTeamMember()">Send Invitation</button>
+                <button class="btn btn-secondary" onclick="closeInviteMemberModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/subscription-plans.js"></script>
     <script src="js/weather.js"></script>
     <script src="js/motorcycles.js"></script>
@@ -998,6 +1101,7 @@
     <script src="js/race-series.js"></script>
     <script src="js/events.js"></script>
     <script src="js/sessions.js"></script>
+    <script src="js/teams.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

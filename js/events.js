@@ -323,6 +323,11 @@ function showSettingsTab(tabName) {
         loadTracksIntoEventForm();
     } else if (tabName === 'motorcycles') {
         displayMotorcyclesList();
+    } else if (tabName === 'teams') {
+        // Initialize teams functionality when tab is shown
+        if (typeof initializeTeams === 'function') {
+            initializeTeams();
+        }
     } else if (tabName === 'account') {
         // Load race series options when account tab is shown
         loadUserRaceSeriesOptions();
