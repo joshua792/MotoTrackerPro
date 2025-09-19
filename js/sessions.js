@@ -3,8 +3,9 @@
 // Save current session data
 function saveCurrentSession() {
     if (!currentMotorcycle || !currentEvent) return;
-    
-    const sessionKey = `${currentEvent}_${currentMotorcycle.id}_${currentSession}`;
+
+    const eventId = currentEvent?.id || currentEvent;
+    const sessionKey = `${eventId}_${currentMotorcycle.id}_${currentSession}`;
     
     sessionData[sessionKey] = {
         // Suspension data
@@ -59,15 +60,27 @@ function saveCurrentSession() {
 
 // Load session data from database
 async function loadSessionData() {
-    if (!currentMotorcycle || !currentEvent) return;
-    
+    console.log('📊 START: loadSessionData called');
+    console.log('📝 currentMotorcycle:', currentMotorcycle);
+    console.log('📝 currentEvent:', currentEvent);
+
+    if (!currentMotorcycle || !currentEvent) {
+        console.log('❌ Missing motorcycle or event, returning early');
+        return;
+    }
+
     try {
-        const response = await apiCall(`get-sessions?event_id=${currentEvent}&motorcycle_id=${currentMotorcycle.id}`);
+        const eventId = currentEvent.id || currentEvent; // Handle both object and string
+        console.log('🌐 Making API call with event_id:', eventId, 'motorcycle_id:', currentMotorcycle.id);
+        const response = await apiCall(`get-sessions?event_id=${eventId}&motorcycle_id=${currentMotorcycle.id}`);
+        console.log('📝 API Response:', response);
         const sessions = response.sessions || [];
-        
+        console.log('📊 Sessions found:', sessions.length);
+
         // Convert database format back to our sessionData format
         sessionData = {};
-        sessions.forEach(session => {
+        sessions.forEach((session, index) => {
+            console.log(`📝 Processing session ${index + 1}:`, session.session_type);
             const sessionKey = `${session.event_id}_${session.motorcycle_id}_${session.session_type}`;
             sessionData[sessionKey] = {
                 frontSpring: session.front_spring,
@@ -100,20 +113,27 @@ async function loadSessionData() {
                 motorcycle: currentMotorcycle
             };
         });
-        
+
+        console.log('📊 Final sessionData:', sessionData);
+        console.log('🔄 Calling loadCurrentSessionFromData');
         loadCurrentSessionFromData();
     } catch (error) {
-        console.error('Error loading session data:', error);
+        console.error('💥 Error loading session data:', error);
         clearAllFields();
     }
 }
 
 // Load current session from sessionData
 function loadCurrentSessionFromData() {
-    const sessionKey = `${currentEvent}_${currentMotorcycle.id}_${currentSession}`;
+    const eventId = currentEvent?.id || currentEvent;
+    const sessionKey = `${eventId}_${currentMotorcycle.id}_${currentSession}`;
+    console.log('🔍 Looking for sessionKey:', sessionKey);
+    console.log('🔍 Available sessionData keys:', Object.keys(sessionData));
     const data = sessionData[sessionKey];
-    
+    console.log('📝 Found session data:', !!data);
+
     if (data) {
+        console.log('✅ Loading session data into form fields');
         // Load suspension data
         document.getElementById('front-spring').value = data.frontSpring || '';
         document.getElementById('front-preload').value = data.frontPreload || '';
@@ -147,7 +167,9 @@ function loadCurrentSessionFromData() {
         // Load notes and feedback
         document.getElementById('notes').value = data.notes || '';
         document.getElementById('feedback').value = data.feedback || '';
+        console.log('🎉 Session data loaded successfully into form');
     } else {
+        console.log('⚠️ No session data found, clearing all fields');
         clearAllFields();
     }
 }
@@ -161,7 +183,8 @@ async function saveSession() {
         return;
     }
 
-    const sessionKey = `${currentEvent}_${currentMotorcycle.id}_${currentSession}`;
+    const eventId = currentEvent?.id || currentEvent;
+    const sessionKey = `${eventId}_${currentMotorcycle.id}_${currentSession}`;
     const sessionDataToSave = sessionData[sessionKey];
 
     if (!sessionDataToSave) {
