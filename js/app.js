@@ -77,9 +77,27 @@ function loadAppState() {
     }
 }
 
+// Get user-specific settings key
+function getUserSettingsKey() {
+    const userToken = localStorage.getItem('token');
+    let userId = null;
+
+    if (userToken) {
+        try {
+            const tokenPayload = JSON.parse(atob(userToken.split('.')[1]));
+            userId = tokenPayload.userId;
+        } catch (e) {
+            console.warn('Could not parse user ID from token');
+        }
+    }
+
+    return userId ? `raceTrackerSettings_${userId}` : 'raceTrackerSettings';
+}
+
 // Settings management
 async function loadSettings() {
-    const savedSettings = JSON.parse(localStorage.getItem('raceTrackerSettings') || '{}');
+    const settingsKey = getUserSettingsKey();
+    const savedSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}');
     settings = { ...settings, ...savedSettings };
 
     if (document.getElementById('pressure-unit')) {
@@ -181,7 +199,7 @@ function saveUnitSettings() {
     settings.pressureUnit = document.getElementById('pressure-unit').value;
     settings.temperatureUnit = document.getElementById('temperature-unit').value;
     
-    localStorage.setItem('raceTrackerSettings', JSON.stringify(settings));
+    localStorage.setItem(getUserSettingsKey(), JSON.stringify(settings));
     
     // Update UI labels based on unit selection
     updateUnitLabels();
@@ -219,7 +237,7 @@ async function saveAccountSettings() {
 
             // Update local settings for race series
             settings.userRaceSeries = selectedSeries;
-            localStorage.setItem('raceTrackerSettings', JSON.stringify(settings));
+            localStorage.setItem(getUserSettingsKey(), JSON.stringify(settings));
 
             // Update event series dropdown and main event dropdown
             updateEventSeriesDropdown();
