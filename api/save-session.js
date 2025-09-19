@@ -137,8 +137,9 @@ export default async function handler(req, res) {
       console.log('Could not check schema:', schemaError.message);
     }
 
+    let result;
     try {
-      const result = await client.query(
+      result = await client.query(
       `INSERT INTO sessions (
         id, event_id, motorcycle_id, session_type,
         front_spring, front_preload, front_compression, front_rebound,
