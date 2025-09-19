@@ -1104,6 +1104,22 @@
         </div>
     </div>
 
+    <!-- Team Members Modal -->
+    <div id="team-members-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeTeamMembersModal()">&times;</span>
+            <div class="modal-header" id="team-members-modal-title">Manage Team Members</div>
+
+            <div id="team-members-list" style="max-height: 400px; overflow-y: auto;">
+                <p>Loading team members...</p>
+            </div>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-secondary" onclick="closeTeamMembersModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/subscription-plans.js"></script>
     <script src="js/weather.js"></script>
     <script src="js/motorcycles.js"></script>

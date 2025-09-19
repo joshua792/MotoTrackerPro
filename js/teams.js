@@ -293,6 +293,120 @@ async function checkCanCreateTeams() {
     }
 }
 
+// Show team members modal
+function showTeamMembersModal() {
+    if (!currentTeam) {
+        alert('Please select a team first');
+        return;
+    }
+
+    const modal = document.getElementById('team-members-modal');
+    if (modal) {
+        loadTeamMembers();
+        modal.style.display = 'block';
+    }
+}
+
+// Close team members modal
+function closeTeamMembersModal() {
+    const modal = document.getElementById('team-members-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Load team members
+async function loadTeamMembers() {
+    if (!currentTeam) return;
+
+    const membersList = document.getElementById('team-members-list');
+    const modalTitle = document.getElementById('team-members-modal-title');
+
+    if (modalTitle) {
+        modalTitle.textContent = `Manage Members - ${currentTeam.name}`;
+    }
+
+    if (!membersList) return;
+
+    membersList.innerHTML = '<p>Loading team members...</p>';
+
+    try {
+        const response = await apiCall(`teams/get-team-members?teamId=${currentTeam.id}`);
+
+        if (response.success && response.members) {
+            displayTeamMembers(response.members);
+        } else {
+            membersList.innerHTML = '<p>No members found</p>';
+        }
+    } catch (error) {
+        console.error('Error loading team members:', error);
+        membersList.innerHTML = '<p>Error loading team members</p>';
+    }
+}
+
+// Display team members
+function displayTeamMembers(members) {
+    const membersList = document.getElementById('team-members-list');
+    const canManage = currentTeam && (currentTeam.role === 'owner' || currentTeam.role === 'admin');
+
+    if (!membersList) return;
+
+    if (members.length === 0) {
+        membersList.innerHTML = '<p>No team members found</p>';
+        return;
+    }
+
+    membersList.innerHTML = members.map(member => `
+        <div class="team-member-card" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-weight: bold; font-size: 16px;">${member.name}</div>
+                <div style="color: #666; font-size: 14px;">${member.email}</div>
+                <div style="color: #888; font-size: 12px;">
+                    Role: ${member.role} •
+                    Joined: ${member.joined_at ? new Date(member.joined_at).toLocaleDateString() : 'Pending'}
+                    ${member.status !== 'active' ? ` • Status: ${member.status}` : ''}
+                </div>
+            </div>
+            <div>
+                ${member.role === 'owner' ?
+                    '<span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">OWNER</span>' :
+                    canManage && member.role !== 'owner' ?
+                        `<button onclick="removeTeamMember('${member.user_id}')" class="btn btn-secondary btn-small" style="background: #dc3545; color: white;">Remove</button>` :
+                        ''
+                }
+            </div>
+        </div>
+    `).join('');
+}
+
+// Remove team member
+async function removeTeamMember(userId) {
+    if (!currentTeam || !userId) return;
+
+    if (!confirm('Are you sure you want to remove this member from the team?')) {
+        return;
+    }
+
+    try {
+        const response = await apiCall('teams/remove-member', {
+            method: 'POST',
+            body: JSON.stringify({
+                teamId: currentTeam.id,
+                userId: userId
+            })
+        });
+
+        if (response.success) {
+            alert('Member removed successfully');
+            loadTeamMembers(); // Refresh the list
+            loadUserTeams(); // Refresh team info
+        }
+    } catch (error) {
+        console.error('Error removing team member:', error);
+        alert('Error removing team member: ' + error.message);
+    }
+}
+
 // Initialize teams functionality
 async function initializeTeams() {
     try {
