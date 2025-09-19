@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { sendTeamInvitationEmail } = require('../email/send-invitation');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -44,11 +45,12 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid role. Must be member or admin' });
     }
 
-    // Check if user has permission to invite (must be owner or admin)
+    // Check if user has permission to invite (must be owner or admin) and get inviter info
     const membershipQuery = `
-      SELECT tm.role, t.name as team_name, t.owner_id
+      SELECT tm.role, t.name as team_name, t.owner_id, u.name as inviter_name
       FROM team_memberships tm
       JOIN teams t ON tm.team_id = t.id
+      JOIN users u ON tm.user_id = u.id
       WHERE tm.team_id = $1 AND tm.user_id = $2 AND tm.status = 'active'
     `;
 
@@ -61,6 +63,7 @@ module.exports = async function handler(req, res) {
 
     const userRole = membershipResult.rows[0].role;
     const teamName = membershipResult.rows[0].team_name;
+    const inviterName = membershipResult.rows[0].inviter_name;
 
     if (userRole !== 'owner' && userRole !== 'admin') {
       await pool.end();
@@ -130,7 +133,17 @@ module.exports = async function handler(req, res) {
 
     await pool.end();
 
-    res.json({
+    // Send invitation email
+    const emailResult = await sendTeamInvitationEmail({
+      toEmail: email.toLowerCase(),
+      teamName: teamName,
+      inviterName: inviterName,
+      invitationToken: inviteToken,
+      expiresAt: expiresAt
+    });
+
+    // Return success even if email fails (invitation is still valid)
+    const response = {
       success: true,
       invitation: {
         id: inviteResult.rows[0].id,
@@ -140,8 +153,19 @@ module.exports = async function handler(req, res) {
         role: role,
         expiresAt: inviteResult.rows[0].expires_at
       },
-      message: 'Invitation created successfully'
-    });
+      message: 'Invitation created successfully',
+      emailSent: emailResult.success
+    };
+
+    if (!emailResult.success) {
+      response.emailError = emailResult.error;
+      response.message += ' (Email delivery failed - please share the invitation link manually)';
+      console.warn('Failed to send invitation email:', emailResult.error);
+    } else {
+      response.message += ' and email sent';
+    }
+
+    res.json(response);
 
   } catch (error) {
     console.error('Invite member error:', error);

@@ -424,6 +424,11 @@ async function exportData() {
 async function initApp() {
     await loadSettings();
 
+    // Initialize invitation handling
+    if (typeof initializeInvitations === 'function') {
+        initializeInvitations();
+    }
+
     // Authentication check is handled by auth.js initAuth()
     // Data loading will happen after successful authentication
 
@@ -456,6 +461,11 @@ async function loadAppData() {
         // Initial track map load - only if there's a current event
         if (currentEvent?.id) {
             loadTrackMap(currentEvent.id);
+        }
+
+        // Check for pending invitation after successful data load
+        if (typeof checkPendingInvitation === 'function') {
+            checkPendingInvitation();
         }
     } catch (error) {
         console.error('Error loading app data:', error);
