@@ -121,6 +121,22 @@ export default async function handler(req, res) {
 
     console.log('About to execute database query...');
 
+    // First, let's check the current schema to see what's actually in the database
+    try {
+      const schemaCheck = await client.query(`
+        SELECT column_name, character_maximum_length
+        FROM information_schema.columns
+        WHERE table_name = 'sessions' AND character_maximum_length IS NOT NULL
+        ORDER BY column_name
+      `);
+      console.log('Current sessions table schema:');
+      schemaCheck.rows.forEach(row => {
+        console.log(`${row.column_name}: VARCHAR(${row.character_maximum_length})`);
+      });
+    } catch (schemaError) {
+      console.log('Could not check schema:', schemaError.message);
+    }
+
     try {
       const result = await client.query(
       `INSERT INTO sessions (
