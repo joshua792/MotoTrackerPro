@@ -27,6 +27,9 @@ export default async function handler(req, res) {
     const token = authHeader.substring(7);
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
 
+    console.log('Decoded JWT userId:', decoded.userId);
+    console.log('UserId length:', decoded.userId ? decoded.userId.length : 0);
+
     const client = new Client({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false }
@@ -114,7 +117,10 @@ export default async function handler(req, res) {
     });
     console.log('=== End Debug ===');
 
-    const result = await client.query(
+    console.log('About to execute database query...');
+
+    try {
+      const result = await client.query(
       `INSERT INTO sessions (
         id, event_id, motorcycle_id, session_type,
         front_spring, front_preload, front_compression, front_rebound,
@@ -154,6 +160,18 @@ export default async function handler(req, res) {
         sessionData.weatherCapturedAt || null
       ]
     );
+
+    console.log('Database query successful!');
+
+    } catch (dbError) {
+      console.error('Database query failed with specific error:', dbError);
+      console.error('Error code:', dbError.code);
+      console.error('Error detail:', dbError.detail);
+      console.error('Error constraint:', dbError.constraint);
+      console.error('Error table:', dbError.table);
+      console.error('Error column:', dbError.column);
+      throw dbError; // Re-throw to be caught by outer catch
+    }
 
     // Increment usage count for non-admin users
     if (!user.is_admin) {
