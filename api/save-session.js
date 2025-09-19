@@ -112,14 +112,14 @@ export default async function handler(req, res) {
         weather_captured_at = $34, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
       [
-        truncateString(sessionId, 255), sessionData.event, sessionData.motorcycle.id, truncateString(sessionData.session, 50),
+        truncateString(sessionId, 255), sessionData.event, sessionData.motorcycle.id, truncateString(sessionData.session, 100),
         truncateString(sessionData.frontSpring, 50), truncateString(sessionData.frontPreload, 50), truncateString(sessionData.frontCompression, 50), truncateString(sessionData.frontRebound, 50),
         truncateString(sessionData.rearSpring, 50), truncateString(sessionData.rearPreload, 50), truncateString(sessionData.rearCompression, 50), truncateString(sessionData.rearRebound, 50),
         truncateString(sessionData.frontSprocket, 50), truncateString(sessionData.rearSprocket, 50), truncateString(sessionData.swingarmLength, 50),
-        truncateString(sessionData.frontTire, 100), truncateString(sessionData.rearTire, 100), truncateString(sessionData.frontPressure, 50), truncateString(sessionData.rearPressure, 50),
+        truncateString(sessionData.frontTire, 150), truncateString(sessionData.rearTire, 150), truncateString(sessionData.frontPressure, 50), truncateString(sessionData.rearPressure, 50),
         truncateString(sessionData.rake, 50), truncateString(sessionData.trail, 50), truncateString(sessionData.notes, 1000), truncateString(sessionData.feedback, 1000),
         truncateString(sessionData.frontRideHeight, 50), truncateString(sessionData.rearRideHeight, 50), truncateString(sessionData.frontSag, 50), truncateString(sessionData.rearSag, 50),
-        truncateString(sessionData.swingarmAngle, 50), truncateString(sessionData.weatherTemperature, 50), truncateString(sessionData.weatherCondition, 100),
+        truncateString(sessionData.swingarmAngle, 50), truncateString(sessionData.weatherTemperature, 50), truncateString(sessionData.weatherCondition, 150),
         truncateString(sessionData.weatherDescription, 500), truncateString(sessionData.weatherHumidity, 50), truncateString(sessionData.weatherWindSpeed, 50),
         sessionData.weatherCapturedAt || null
       ]
