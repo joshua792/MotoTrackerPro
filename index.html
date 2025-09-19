@@ -78,16 +78,16 @@
                     </div>
                 </div>
 
-                <!-- Motorcycle Section -->
+                <!-- Current Motorcycle Display -->
                 <div class="motorcycle-section">
                     <div class="section-header">
-                        <span class="section-title">Motorcycles</span>
-                        <button class="btn btn-primary btn-small" onclick="showAddMotorcycleModal()">+ Add Motorcycle</button>
+                        <span class="section-title">Current Motorcycle</span>
+                        <button class="btn btn-secondary btn-small" onclick="showSettingsModal(); showSettingsTab('motorcycles');">Manage Motorcycles</button>
                     </div>
                     <div id="motorcycle-list" class="motorcycle-grid">
                         <div class="empty-state">
-                            <h3>No motorcycles added</h3>
-                            <p>Click "Add Motorcycle" to get started</p>
+                            <h3>No motorcycle selected</h3>
+                            <p>Go to Settings → Motorcycles to add and select a motorcycle</p>
                         </div>
                     </div>
                 </div>
@@ -411,6 +411,7 @@
                 <div style="display: flex; gap: 20px; margin-bottom: 15px;">
                     <button class="btn btn-secondary" onclick="showSettingsTab('units')" id="units-tab">Units</button>
                     <button class="btn btn-secondary" onclick="showSettingsTab('events')" id="events-tab">Events</button>
+                    <button class="btn btn-secondary" onclick="showSettingsTab('motorcycles')" id="motorcycles-tab">Motorcycles</button>
                     <button class="btn btn-secondary" onclick="showSettingsTab('account')" id="account-tab">Account</button>
                     <button class="btn btn-secondary" onclick="showSettingsTab('admin')" id="admin-tab" style="display: none;">Admin</button>
                 </div>
@@ -444,6 +445,17 @@
                 </div>
                 <div id="events-list" style="max-height: 400px; overflow-y: auto;">
                     Loading events...
+                </div>
+            </div>
+
+            <!-- Motorcycles Tab -->
+            <div id="motorcycles-settings" class="settings-tab" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Motorcycle Management</h3>
+                    <button class="btn btn-primary btn-small" onclick="showAddMotorcycleModal()">+ Add Motorcycle</button>
+                </div>
+                <div id="motorcycles-settings-list" style="max-height: 400px; overflow-y: auto;">
+                    Loading motorcycles...
                 </div>
             </div>
 
@@ -481,6 +493,10 @@
                     <small style="color: #666; font-size: 12px;">Hold Ctrl/Cmd to select multiple series</small>
                 </div>
 
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account Info</button>
+                </div>
+
                 <hr style="margin: 30px 0; border: 1px solid #ddd;">
 
                 <h3>Change Password</h3>
@@ -497,8 +513,7 @@
                     <input type="password" id="confirm-new-password" placeholder="Confirm new password">
                 </div>
 
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="saveAccountSettings()">Save Account Info</button>
+                <div style="margin-top: 20px;">
                     <button class="btn btn-secondary" onclick="changePassword()">Change Password</button>
                 </div>
             </div>

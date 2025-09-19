@@ -516,6 +516,8 @@ function showSettingsTab(tabName) {
     
     if (tabName === 'events') {
         displayEventsList();
+    } else if (tabName === 'motorcycles') {
+        displayMotorcyclesList();
     }
 }
 
@@ -544,6 +546,48 @@ function displayEventsList() {
     `).join('');
 }
 
+// Display motorcycles list in settings
+function displayMotorcyclesList() {
+    const container = document.getElementById('motorcycles-settings-list');
+    if (motorcycles.length === 0) {
+        container.innerHTML = '<p>No motorcycles available. Click "Add Motorcycle" to get started.</p>';
+        return;
+    }
+
+    container.innerHTML = motorcycles.map(motorcycle => `
+        <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-weight: bold; font-size: 16px; color: #2c5aa0; margin-bottom: 5px;">
+                    ${motorcycle.make} ${motorcycle.model}
+                </div>
+                <div style="color: #666; font-size: 14px; margin-bottom: 3px;">
+                    <strong>Class:</strong> ${motorcycle.class}
+                </div>
+                <div style="color: #666; font-size: 14px; margin-bottom: 3px;">
+                    <strong>Number:</strong> ${motorcycle.number}
+                </div>
+                <div style="color: #666; font-size: 14px;">
+                    <strong>Variant:</strong> ${motorcycle.variant}
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                ${currentMotorcycle && currentMotorcycle.id === motorcycle.id
+                    ? '<span class="btn btn-small" style="background: #28a745; color: white;">Selected</span>'
+                    : `<button onclick="selectMotorcycle('${motorcycle.id}')" class="btn btn-primary btn-small">Select</button>`
+                }
+                <button onclick="editMotorcycle('${motorcycle.id}')"
+                        class="btn btn-secondary btn-small">
+                    Edit
+                </button>
+                <button onclick="deleteMotorcycle('${motorcycle.id}')"
+                        class="btn btn-small"
+                        style="background: #dc3545; color: white;">
+                    Delete
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
 
 // Show add event modal
 function showAddEventModal() {

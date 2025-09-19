@@ -16,28 +16,37 @@ async function loadMotorcycles() {
 // Update motorcycle display with improved layout
 function updateMotorcycleDisplay() {
     const container = document.getElementById('motorcycle-list');
-    
+
     if (motorcycles.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <h3>No motorcycles added</h3>
-                <p>Click "Add Motorcycle" to get started</p>
+                <h3>No motorcycle selected</h3>
+                <p>Go to Settings → Motorcycles to add and select a motorcycle</p>
+            </div>
+        `;
+    } else if (currentMotorcycle) {
+        container.innerHTML = `
+            <div class="motorcycle-card active">
+                <div class="motorcycle-number">#${currentMotorcycle.number}${currentMotorcycle.variant}</div>
+                <div class="motorcycle-info">
+                    <div class="motorcycle-make-model">${currentMotorcycle.make} ${currentMotorcycle.model}</div>
+                    <div class="motorcycle-class">${currentMotorcycle.class}</div>
+                </div>
             </div>
         `;
     } else {
-        container.innerHTML = motorcycles.map(moto => `
-            <div class="motorcycle-card ${currentMotorcycle && currentMotorcycle.id === moto.id ? 'active' : ''}" 
-                 onclick="handleMotorcycleClick('${moto.id}')"
-                 ondblclick="handleMotorcycleDoubleClick('${moto.id}')">
-                <div class="motorcycle-number">#${moto.number}${moto.variant}</div>
-                <div class="motorcycle-info">
-                    <div class="motorcycle-make-model">${moto.make} ${moto.model}</div>
-                    <div class="motorcycle-class">${moto.class}</div>
-                </div>
-                <button onclick="event.stopPropagation(); deleteMotorcycle('${moto.id}')" 
-                        style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 4px 8px; font-size: 10px; cursor: pointer;">Delete</button>
+        container.innerHTML = `
+            <div class="empty-state">
+                <h3>No motorcycle selected</h3>
+                <p>Go to Settings → Motorcycles to select a motorcycle</p>
             </div>
-        `).join('');
+        `;
+    }
+
+    // Also update the settings list if it's visible
+    const settingsContainer = document.getElementById('motorcycles-settings-list');
+    if (settingsContainer && typeof displayMotorcyclesList === 'function') {
+        displayMotorcyclesList();
     }
 }
 
@@ -114,6 +123,11 @@ function selectMotorcycleInternal(motorcycleId) {
     saveAppState();
     
     checkShowMainContent();
+}
+
+// Public function to select a motorcycle (used from settings)
+function selectMotorcycle(motorcycleId) {
+    selectMotorcycleInternal(motorcycleId);
 }
 
 // Handle motorcycle card clicks
