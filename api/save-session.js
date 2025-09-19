@@ -111,8 +111,10 @@ export default async function handler(req, res) {
 
     console.log('Database values being inserted:');
     dbValues.forEach((val, index) => {
-      if (val && val.toString().length > 150) {
-        console.log(`Value ${index} is ${val.toString().length} chars:`, val);
+      const strVal = val ? val.toString() : 'null';
+      console.log(`Value ${index}: "${strVal}" (${strVal.length} chars)`);
+      if (strVal.length > 150) {
+        console.log(`*** WARNING: Value ${index} exceeds 150 chars! ***`);
       }
     });
     console.log('=== End Debug ===');
