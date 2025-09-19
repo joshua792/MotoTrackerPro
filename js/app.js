@@ -475,6 +475,229 @@ function switchBackToAdmin() {
     }
 }
 
+// Admin section management
+function showAdminSection(section) {
+    // Hide all admin sections
+    document.getElementById('admin-users-section').style.display = 'none';
+    document.getElementById('admin-tracks-section').style.display = 'none';
+
+    // Remove active class from all admin tab buttons
+    document.getElementById('admin-users-tab').classList.remove('btn-primary');
+    document.getElementById('admin-users-tab').classList.add('btn-secondary');
+    document.getElementById('admin-tracks-tab').classList.remove('btn-primary');
+    document.getElementById('admin-tracks-tab').classList.add('btn-secondary');
+
+    // Show selected section
+    document.getElementById('admin-' + section + '-section').style.display = 'block';
+    document.getElementById('admin-' + section + '-tab').classList.remove('btn-secondary');
+    document.getElementById('admin-' + section + '-tab').classList.add('btn-primary');
+
+    if (section === 'tracks') {
+        loadTracksList();
+    }
+}
+
+// Track management functions
+let tracks = [];
+let currentEditingTrackId = null;
+let trackMapData = null;
+
+async function loadTracksList() {
+    try {
+        const response = await apiCall('get-tracks');
+
+        if (response.success) {
+            tracks = response.tracks;
+            const tracksList = document.getElementById('tracks-list');
+
+            if (tracks.length === 0) {
+                tracksList.innerHTML = '<p>No tracks found. Click "Add Track" to create the first track.</p>';
+                return;
+            }
+
+            let html = '<div style="margin-bottom: 15px;"><strong>Total Tracks: ' + tracks.length + '</strong></div>';
+
+            tracks.forEach(track => {
+                html += `
+                    <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px; background: #ffffff;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: bold; font-size: 16px; color: #2c5aa0; margin-bottom: 5px;">
+                                    ${track.name}
+                                </div>
+                                <div style="color: #666; font-size: 14px; margin-bottom: 3px;">
+                                    📍 ${track.location}${track.country ? ', ' + track.country : ''}
+                                </div>
+                                ${track.description ? `<div style="color: #666; font-size: 12px; margin-bottom: 5px;">${track.description}</div>` : ''}
+                                <div style="color: #666; font-size: 12px;">
+                                    ${track.length_miles ? `Length: ${track.length_miles} mi` : ''}
+                                    ${track.length_km ? ` (${track.length_km} km)` : ''}
+                                    ${track.turns ? ` • ${track.turns} turns` : ''}
+                                    ${track.direction ? ` • ${track.direction}` : ''}
+                                </div>
+                                ${track.track_map_filename ? '<div style="color: #28a745; font-size: 12px; margin-top: 5px;">📄 Track map available</div>' : ''}
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-left: 15px;">
+                                <button onclick="editTrack('${track.id}')" class="btn btn-secondary btn-small">Edit</button>
+                                <button onclick="deleteTrack('${track.id}')" class="btn btn-small" style="background: #dc3545; color: white;">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            tracksList.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Error loading tracks list:', error);
+        document.getElementById('tracks-list').innerHTML = '<p style="color: #d63384;">Error loading tracks: ' + error.message + '</p>';
+    }
+}
+
+function showAddTrackModal() {
+    currentEditingTrackId = null;
+    trackMapData = null;
+    document.getElementById('track-modal-title').textContent = 'Add New Track';
+    document.getElementById('save-track-btn').textContent = 'Add Track';
+    clearTrackForm();
+    document.getElementById('track-modal').style.display = 'block';
+}
+
+function closeTrackModal() {
+    document.getElementById('track-modal').style.display = 'none';
+    currentEditingTrackId = null;
+    trackMapData = null;
+    clearTrackForm();
+}
+
+function clearTrackForm() {
+    document.getElementById('track-name').value = '';
+    document.getElementById('track-location').value = '';
+    document.getElementById('track-country').value = '';
+    document.getElementById('track-description').value = '';
+    document.getElementById('track-length-miles').value = '';
+    document.getElementById('track-length-km').value = '';
+    document.getElementById('track-turns').value = '';
+    document.getElementById('track-direction').value = 'clockwise';
+    document.getElementById('track-map-upload').value = '';
+    document.getElementById('track-map-preview').style.display = 'none';
+}
+
+function handleTrackMapUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            trackMapData = e.target.result.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+
+            // Show preview
+            const preview = document.getElementById('track-map-preview');
+            const img = document.getElementById('track-map-preview-img');
+            img.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+async function saveTrack() {
+    const name = document.getElementById('track-name').value;
+    const location = document.getElementById('track-location').value;
+    const country = document.getElementById('track-country').value;
+    const description = document.getElementById('track-description').value;
+    const lengthMiles = document.getElementById('track-length-miles').value;
+    const lengthKm = document.getElementById('track-length-km').value;
+    const turns = document.getElementById('track-turns').value;
+    const direction = document.getElementById('track-direction').value;
+
+    if (!name || !location) {
+        alert('Track name and location are required');
+        return;
+    }
+
+    try {
+        const trackData = {
+            id: currentEditingTrackId,
+            name,
+            location,
+            country: country || null,
+            description: description || null,
+            length_miles: lengthMiles ? parseFloat(lengthMiles) : null,
+            length_km: lengthKm ? parseFloat(lengthKm) : null,
+            turns: turns ? parseInt(turns) : null,
+            direction,
+            track_map_data: trackMapData,
+            track_map_filename: trackMapData ? document.getElementById('track-map-upload').files[0]?.name : null
+        };
+
+        const response = await apiCall('save-track', {
+            method: 'POST',
+            body: JSON.stringify(trackData)
+        });
+
+        if (response.success) {
+            alert(response.message);
+            closeTrackModal();
+            loadTracksList();
+        }
+    } catch (error) {
+        console.error('Error saving track:', error);
+        alert('Error saving track: ' + error.message);
+    }
+}
+
+function editTrack(trackId) {
+    const track = tracks.find(t => t.id === trackId);
+    if (!track) return;
+
+    currentEditingTrackId = trackId;
+    document.getElementById('track-modal-title').textContent = 'Edit Track';
+    document.getElementById('save-track-btn').textContent = 'Update Track';
+
+    document.getElementById('track-name').value = track.name || '';
+    document.getElementById('track-location').value = track.location || '';
+    document.getElementById('track-country').value = track.country || '';
+    document.getElementById('track-description').value = track.description || '';
+    document.getElementById('track-length-miles').value = track.length_miles || '';
+    document.getElementById('track-length-km').value = track.length_km || '';
+    document.getElementById('track-turns').value = track.turns || '';
+    document.getElementById('track-direction').value = track.direction || 'clockwise';
+
+    // Handle existing track map
+    if (track.track_map_filename) {
+        const preview = document.getElementById('track-map-preview');
+        const img = document.getElementById('track-map-preview-img');
+        img.src = `/api/get-track-map?trackId=${track.id}`;
+        preview.style.display = 'block';
+    }
+
+    document.getElementById('track-modal').style.display = 'block';
+}
+
+async function deleteTrack(trackId) {
+    const track = tracks.find(t => t.id === trackId);
+    if (!track) return;
+
+    if (!confirm(`Are you sure you want to delete "${track.name}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await apiCall('delete-track', {
+            method: 'POST',
+            body: JSON.stringify({ id: trackId })
+        });
+
+        if (response.success) {
+            alert('Track deleted successfully');
+            loadTracksList();
+        }
+    } catch (error) {
+        console.error('Error deleting track:', error);
+        alert('Error deleting track: ' + error.message);
+    }
+}
+
 // Initialize app when page loads
 window.addEventListener('DOMContentLoaded', initApp);
 
@@ -484,7 +707,8 @@ window.addEventListener('click', function(event) {
     const tireModal = document.getElementById('tire-modal');
     const settingsModal = document.getElementById('settings-modal');
     const addEventModal = document.getElementById('add-event-modal');
-    
+    const trackModal = document.getElementById('track-modal');
+
     if (event.target === motorcycleModal) {
         closeAddMotorcycleModal();
     }
@@ -496,5 +720,8 @@ window.addEventListener('click', function(event) {
     }
     if (event.target === addEventModal) {
         closeAddEventModal();
+    }
+    if (event.target === trackModal) {
+        closeTrackModal();
     }
 });

@@ -169,22 +169,27 @@ function editEvent(eventId) {
 async function saveEventData() {
     const series = document.getElementById('event-series').value;
     const name = document.getElementById('event-name').value;
-    const track = document.getElementById('event-track').value;
+    const trackId = document.getElementById('event-track').value;
     const date = document.getElementById('event-date').value;
     const location = document.getElementById('event-location').value;
 
-    console.log('Saving event data:', { series, name, track, date, location }); // Debug logging
+    console.log('Saving event data:', { series, name, trackId, date, location }); // Debug logging
 
-    if (!series || !name || !track || !date || !location) {
+    if (!series || !name || !trackId || !date || !location) {
         alert('Please fill in all fields');
         return;
     }
+
+    // Get track name for display purposes
+    const trackSelect = document.getElementById('event-track');
+    const trackName = trackSelect.options[trackSelect.selectedIndex].text;
 
     const event = {
         id: currentEditingEventId || 'event-' + Date.now(),
         series,
         name,
-        track,
+        track: trackName.split(' - ')[0], // Extract just the track name
+        track_id: trackId,
         date,
         location,
         created_at: new Date().toISOString(),
@@ -590,11 +595,12 @@ function displayMotorcyclesList() {
 }
 
 // Show add event modal
-function showAddEventModal() {
+async function showAddEventModal() {
     currentEditingEventId = null;
     document.getElementById('event-modal-title').textContent = 'Add New Event';
     document.getElementById('save-event-btn').textContent = 'Add Event';
     clearEventForm();
+    await loadTracksIntoEventForm();
     document.getElementById('add-event-modal').style.display = 'block';
 }
 
@@ -603,6 +609,36 @@ function closeAddEventModal() {
     document.getElementById('add-event-modal').style.display = 'none';
     currentEditingEventId = null;
     clearEventForm();
+}
+
+// Load tracks into event form
+async function loadTracksIntoEventForm() {
+    try {
+        const response = await apiCall('get-tracks');
+        const trackSelect = document.getElementById('event-track');
+
+        // Clear existing options except the first one
+        trackSelect.innerHTML = '<option value="">Select Track...</option>';
+
+        if (response.success && response.tracks.length > 0) {
+            response.tracks.forEach(track => {
+                const option = document.createElement('option');
+                option.value = track.id;
+                option.textContent = `${track.name} - ${track.location}`;
+                trackSelect.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No tracks available - Contact admin';
+            option.disabled = true;
+            trackSelect.appendChild(option);
+        }
+    } catch (error) {
+        console.error('Error loading tracks for event form:', error);
+        const trackSelect = document.getElementById('event-track');
+        trackSelect.innerHTML = '<option value="">Error loading tracks</option>';
+    }
 }
 
 // Clear event form
@@ -637,20 +673,25 @@ function updateEventDateRange() {
 async function saveEventData() {
     const series = document.getElementById('event-series').value;
     const name = document.getElementById('event-name').value;
-    const track = document.getElementById('event-track').value;
+    const trackId = document.getElementById('event-track').value;
     const date = document.getElementById('event-date').value;
     const location = document.getElementById('event-location').value;
 
-    if (!series || !name || !track || !date || !location) {
+    if (!series || !name || !trackId || !date || !location) {
         alert('Please fill in all fields');
         return;
     }
+
+    // Get track name for display purposes
+    const trackSelect = document.getElementById('event-track');
+    const trackName = trackSelect.options[trackSelect.selectedIndex].text;
 
     const event = {
         id: currentEditingEventId || 'custom-' + Date.now(),
         series,
         name,
-        track,
+        track: trackName.split(' - ')[0], // Extract just the track name
+        track_id: trackId,
         date,
         location
     };

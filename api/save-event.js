@@ -24,11 +24,11 @@ module.exports = async function handler(req, res) {
       ssl: { rejectUnauthorized: false }
     });
 
-    const { id, series, name, track, date, location } = req.body;
+    const { id, series, name, track, track_id, date, location } = req.body;
 
-    if (!series || !name || !track || !date || !location) {
+    if (!series || !name || !date || !location || (!track && !track_id)) {
       await pool.end();
-      return res.status(400).json({ error: 'Missing required fields: series, name, track, date, location' });
+      return res.status(400).json({ error: 'Missing required fields: series, name, track/track_id, date, location' });
     }
 
     console.log('Saving event:', { id, series, name, track, date, location }); // Debug logging
@@ -42,7 +42,7 @@ module.exports = async function handler(req, res) {
       const checkColumns = `
         SELECT column_name
         FROM information_schema.columns
-        WHERE table_name = 'events' AND column_name IN ('series', 'created_at', 'updated_at')
+        WHERE table_name = 'events' AND column_name IN ('series', 'created_at', 'updated_at', 'track_id')
       `;
 
       const existingColumns = await pool.query(checkColumns);
@@ -64,6 +64,11 @@ module.exports = async function handler(req, res) {
 
         // Update existing records to have the current timestamp
         await pool.query('UPDATE events SET updated_at = NOW() WHERE updated_at IS NULL');
+      }
+
+      if (!columnNames.includes('track_id')) {
+        console.log('Adding track_id column to events table...');
+        await pool.query('ALTER TABLE events ADD COLUMN track_id UUID REFERENCES tracks(id)');
       }
     } catch (alterError) {
       console.error('Error checking/adding columns:', alterError);
@@ -89,19 +94,20 @@ module.exports = async function handler(req, res) {
 
     // Use UPSERT (INSERT ... ON CONFLICT ... DO UPDATE)
     const upsertQuery = `
-      INSERT INTO events (id, series, name, track, date, location, user_id, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      INSERT INTO events (id, series, name, track, track_id, date, location, user_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
       ON CONFLICT (id) DO UPDATE SET
         series = EXCLUDED.series,
         name = EXCLUDED.name,
         track = EXCLUDED.track,
+        track_id = EXCLUDED.track_id,
         date = EXCLUDED.date,
         location = EXCLUDED.location,
         updated_at = NOW()
       RETURNING *
     `;
 
-    const result = await pool.query(upsertQuery, [id, series, name, track, date, location, decoded.userId]);
+    const result = await pool.query(upsertQuery, [id, series, name, track, track_id, date, location, decoded.userId]);
     
     await pool.end();
 
