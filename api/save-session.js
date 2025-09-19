@@ -166,7 +166,7 @@ export default async function handler(req, res) {
         weather_captured_at = $34, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
       [
-        truncateString(sessionId, 255), sessionData.event, sessionData.motorcycle.id, truncateString(sessionData.session, 100),
+        truncateString(sessionId, 255), eventId, motorcycleId, truncateString(sessionData.session, 100),
         truncateString(sessionData.frontSpring, 100), truncateString(sessionData.frontPreload, 100), truncateString(sessionData.frontCompression, 100), truncateString(sessionData.frontRebound, 100),
         truncateString(sessionData.rearSpring, 100), truncateString(sessionData.rearPreload, 100), truncateString(sessionData.rearCompression, 100), truncateString(sessionData.rearRebound, 100),
         truncateString(sessionData.frontSprocket, 100), truncateString(sessionData.rearSprocket, 100), truncateString(sessionData.swingarmLength, 100),
