@@ -27,8 +27,6 @@ export default async function handler(req, res) {
     const token = authHeader.substring(7);
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
 
-    console.log('Decoded JWT userId:', decoded.userId);
-    console.log('UserId length:', decoded.userId ? decoded.userId.length : 0);
 
     const client = new Client({
       connectionString: process.env.DATABASE_URL,
@@ -89,53 +87,6 @@ export default async function handler(req, res) {
       return str.toString().substring(0, maxLength);
     };
 
-    // Debug logging to identify long fields
-    console.log('=== Session Data Debug ===');
-    console.log('Full sessionData:', JSON.stringify(sessionData, null, 2));
-    console.log('sessionId length:', sessionId.length, 'value:', sessionId);
-    console.log('motorcycle.id:', sessionData.motorcycle?.id, 'length:', sessionData.motorcycle?.id ? sessionData.motorcycle.id.toString().length : 0);
-
-    // Log ALL the exact values being sent to database
-    const dbValues = [
-      truncateString(sessionId, 255), eventId, motorcycleId, truncateString(sessionData.session, 100),
-      truncateString(sessionData.frontSpring, 100), truncateString(sessionData.frontPreload, 100), truncateString(sessionData.frontCompression, 100), truncateString(sessionData.frontRebound, 100),
-      truncateString(sessionData.rearSpring, 100), truncateString(sessionData.rearPreload, 100), truncateString(sessionData.rearCompression, 100), truncateString(sessionData.rearRebound, 100),
-      truncateString(sessionData.frontSprocket, 100), truncateString(sessionData.rearSprocket, 100), truncateString(sessionData.swingarmLength, 100),
-      truncateString(sessionData.frontTire, 150), truncateString(sessionData.rearTire, 150), truncateString(sessionData.frontPressure, 100), truncateString(sessionData.rearPressure, 100),
-      truncateString(sessionData.rake, 100), truncateString(sessionData.trail, 100), truncateString(sessionData.notes, 1000), truncateString(sessionData.feedback, 1000),
-      truncateString(sessionData.frontRideHeight, 100), truncateString(sessionData.rearRideHeight, 100), truncateString(sessionData.frontSag, 100), truncateString(sessionData.rearSag, 100),
-      truncateString(sessionData.swingarmAngle, 100), truncateString(sessionData.weatherTemperature, 100), truncateString(sessionData.weatherCondition, 150),
-      truncateString(sessionData.weatherDescription, 1000), truncateString(sessionData.weatherHumidity, 100), truncateString(sessionData.weatherWindSpeed, 100),
-      sessionData.weatherCapturedAt || null
-    ];
-
-    console.log('Database values being inserted:');
-    dbValues.forEach((val, index) => {
-      const strVal = val ? val.toString() : 'null';
-      console.log(`Value ${index}: "${strVal}" (${strVal.length} chars)`);
-      if (strVal.length > 150) {
-        console.log(`*** WARNING: Value ${index} exceeds 150 chars! ***`);
-      }
-    });
-    console.log('=== End Debug ===');
-
-    console.log('About to execute database query...');
-
-    // First, let's check the current schema to see what's actually in the database
-    try {
-      const schemaCheck = await client.query(`
-        SELECT column_name, character_maximum_length
-        FROM information_schema.columns
-        WHERE table_name = 'sessions' AND character_maximum_length IS NOT NULL
-        ORDER BY column_name
-      `);
-      console.log('Current sessions table schema:');
-      schemaCheck.rows.forEach(row => {
-        console.log(`${row.column_name}: VARCHAR(${row.character_maximum_length})`);
-      });
-    } catch (schemaError) {
-      console.log('Could not check schema:', schemaError.message);
-    }
 
     let result;
     try {
@@ -180,16 +131,9 @@ export default async function handler(req, res) {
       ]
     );
 
-    console.log('Database query successful!');
-
     } catch (dbError) {
-      console.error('Database query failed with specific error:', dbError);
-      console.error('Error code:', dbError.code);
-      console.error('Error detail:', dbError.detail);
-      console.error('Error constraint:', dbError.constraint);
-      console.error('Error table:', dbError.table);
-      console.error('Error column:', dbError.column);
-      throw dbError; // Re-throw to be caught by outer catch
+      console.error('Database error saving session:', dbError.message);
+      throw dbError;
     }
 
     // Increment usage count for non-admin users
