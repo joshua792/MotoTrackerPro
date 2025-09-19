@@ -12,15 +12,8 @@ async function loadTrackMap(eventId) {
     try {
         console.log('Loading track map for event:', eventId); // Debug log
 
-        // Get the event details to find the track_id
-        const eventsResponse = await apiCall('get-events');
-        if (!eventsResponse.success) {
-            throw new Error('Failed to load events');
-        }
-
-        console.log('Events response:', eventsResponse); // Debug log
-
-        const event = eventsResponse.events.find(e => e.id === eventId);
+        // Use the global events array instead of making another API call
+        const event = events.find(e => e.id === eventId);
         console.log('Found event:', event); // Debug log
 
         if (!event) {
