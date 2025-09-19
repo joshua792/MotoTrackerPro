@@ -1,6 +1,27 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+// Disable body parsing for Stripe webhook signature verification
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+// Helper function to read raw body
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => {
+      data += chunk;
+    });
+    req.on('end', () => {
+      resolve(data);
+    });
+    req.on('error', reject);
+  });
+}
+
 module.exports = async function handler(req, res) {
   console.log('=== STRIPE WEBHOOK CALLED ===');
   console.log('Method:', req.method);
@@ -12,6 +33,9 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Get raw body for signature verification
+    const rawBody = await getRawBody(req);
+    console.log('Raw body length:', rawBody.length);
     if (!process.env.STRIPE_SECRET_KEY) {
       console.log('ERROR: Stripe configuration missing');
       return res.status(500).json({ error: 'Stripe configuration missing' });
@@ -29,9 +53,9 @@ module.exports = async function handler(req, res) {
 
     let event;
 
-    if (endpointSecret) {
+    if (endpointSecret && sig) {
       try {
-        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+        event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
         console.log('Webhook signature verified successfully');
       } catch (err) {
         console.error('Webhook signature verification failed:', err.message);
@@ -39,8 +63,14 @@ module.exports = async function handler(req, res) {
       }
     } else {
       // For testing without webhook signature verification
-      console.log('WARNING: No webhook secret - using raw body');
-      event = req.body;
+      console.log('WARNING: No webhook secret or signature - parsing JSON body');
+      try {
+        event = JSON.parse(rawBody);
+        console.log('Event parsed from raw body successfully');
+      } catch (parseError) {
+        console.error('Failed to parse webhook body:', parseError.message);
+        return res.status(400).json({ error: 'Invalid JSON body' });
+      }
     }
 
     console.log('Event received:', {
