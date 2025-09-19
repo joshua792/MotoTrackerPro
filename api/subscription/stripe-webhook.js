@@ -37,8 +37,10 @@ module.exports = async function handler(req, res) {
     });
 
     // Handle the event
+    console.log('Webhook received event type:', event.type);
     switch (event.type) {
       case 'checkout.session.completed':
+        console.log('Processing checkout.session.completed');
         await handleCheckoutCompleted(pool, event.data.object);
         break;
 
