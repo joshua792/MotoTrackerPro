@@ -132,20 +132,34 @@ async function loadUserRaceSeriesOptions() {
         // Clear existing options
         seriesSelect.innerHTML = '<option value="">Loading race series...</option>';
 
-        // Load race series from API
-        const response = await apiCall('get-race-series');
+        // Use existing loadRaceSeries function if available
+        let seriesData = [];
+        if (typeof loadRaceSeries === 'function') {
+            seriesData = await loadRaceSeries();
+        } else if (window.raceSeriesData && window.raceSeriesData.length > 0) {
+            // Use cached data
+            seriesData = window.raceSeriesData;
+        } else {
+            // Fallback to direct API call
+            const response = await apiCall('get-race-series');
+            if (response.success && response.raceSeries) {
+                seriesData = response.raceSeries;
+            }
+        }
 
-        if (response.success && response.series) {
+        if (seriesData && seriesData.length > 0) {
             // Clear loading message
             seriesSelect.innerHTML = '';
 
-            // Add race series options
-            response.series.forEach(series => {
-                const option = document.createElement('option');
-                option.value = series.name;
-                option.textContent = series.name;
-                seriesSelect.appendChild(option);
-            });
+            // Add race series options (only active ones)
+            seriesData
+                .filter(series => series.is_active)
+                .forEach(series => {
+                    const option = document.createElement('option');
+                    option.value = series.name;
+                    option.textContent = series.name;
+                    seriesSelect.appendChild(option);
+                });
 
             // Set user's previously selected series
             const userSeries = settings.userRaceSeries || [];
@@ -153,8 +167,7 @@ async function loadUserRaceSeriesOptions() {
                 option.selected = userSeries.includes(option.value);
             });
         } else {
-            seriesSelect.innerHTML = '<option value="">Failed to load race series</option>';
-            console.error('Failed to load race series:', response.error);
+            seriesSelect.innerHTML = '<option value="">No race series available</option>';
         }
     } catch (error) {
         console.error('Error loading race series options:', error);
