@@ -189,6 +189,32 @@ function closeInviteMemberModal() {
     }
 }
 
+// Resend invitation
+async function resendInvitation(email, role) {
+    if (!currentTeam) return;
+
+    try {
+        const response = await apiCall('teams/invite-member', {
+            method: 'POST',
+            body: JSON.stringify({
+                teamId: currentTeam.id,
+                email: email,
+                role: role,
+                resend: true
+            })
+        });
+
+        if (response.success) {
+            closeInviteMemberModal();
+            const emailStatus = response.emailSent ? 'and email sent' : '(email delivery failed)';
+            alert(`Invitation resent to ${email} ${emailStatus}`);
+        }
+    } catch (error) {
+        console.error('Error resending invitation:', error);
+        alert('Error resending invitation: ' + error.message);
+    }
+}
+
 // Invite team member
 async function inviteTeamMember() {
     if (!currentTeam) return;
@@ -213,10 +239,36 @@ async function inviteTeamMember() {
 
         if (response.success) {
             closeInviteMemberModal();
-            alert(`Invitation sent to ${email}`);
+            const emailStatus = response.emailSent ? 'and email sent' : '(email delivery failed)';
+            alert(`Invitation sent to ${email} ${emailStatus}`);
         }
     } catch (error) {
         console.error('Error inviting member:', error);
+
+        // Check if this is a "already invited" error that can be resent
+        if (error.message.includes('API call failed: 409')) {
+            try {
+                const match = error.message.match(/\{.*\}/);
+                if (match) {
+                    const errorData = JSON.parse(match[0]);
+                    if (errorData.canResend) {
+                        const resend = confirm(
+                            `A pending invitation already exists for ${email}.\n\n` +
+                            `Expires: ${new Date(errorData.expiresAt).toLocaleDateString()}\n\n` +
+                            `Would you like to resend the invitation email?`
+                        );
+
+                        if (resend) {
+                            await resendInvitation(email, role);
+                            return;
+                        }
+                    }
+                }
+            } catch (parseError) {
+                // Fall through to generic error
+            }
+        }
+
         alert('Error sending invitation: ' + error.message);
     }
 }
@@ -356,27 +408,42 @@ function displayTeamMembers(members) {
         return;
     }
 
-    membersList.innerHTML = members.map(member => `
-        <div class="team-member-card" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <div style="font-weight: bold; font-size: 16px;">${member.name}</div>
-                <div style="color: #666; font-size: 14px;">${member.email}</div>
-                <div style="color: #888; font-size: 12px;">
-                    Role: ${member.role} •
-                    Joined: ${member.joined_at ? new Date(member.joined_at).toLocaleDateString() : 'Pending'}
-                    ${member.status !== 'active' ? ` • Status: ${member.status}` : ''}
+    membersList.innerHTML = members.map(member => {
+        const isPending = member.type === 'invitation';
+        const borderColor = isPending ? '#ffc107' : '#ddd';
+        const backgroundColor = isPending ? '#fff3cd' : '#fff';
+
+        return `
+            <div class="team-member-card" style="border: 1px solid ${borderColor}; background: ${backgroundColor}; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: bold; font-size: 16px;">
+                        ${member.name}
+                        ${isPending ? '<span style="color: #856404; font-size: 12px; font-weight: normal;"> (Pending Invitation)</span>' : ''}
+                    </div>
+                    <div style="color: #666; font-size: 14px;">${member.email}</div>
+                    <div style="color: #888; font-size: 12px;">
+                        Role: ${member.role} •
+                        ${isPending ?
+                            `Invited: ${new Date(member.invited_at).toLocaleDateString()} • Expires: ${new Date(member.expires_at).toLocaleDateString()}` :
+                            `Joined: ${member.joined_at ? new Date(member.joined_at).toLocaleDateString() : 'Pending'}`
+                        }
+                        ${member.status !== 'active' && !isPending ? ` • Status: ${member.status}` : ''}
+                    </div>
+                </div>
+                <div>
+                    ${member.role === 'owner' ?
+                        '<span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">OWNER</span>' :
+                        isPending && canManage ?
+                            `<button onclick="resendPendingInvitation('${member.email}')" class="btn btn-secondary btn-small" style="background: #ffc107; color: #212529; margin-right: 5px;">Resend</button>` +
+                            `<button onclick="cancelInvitation('${member.email}')" class="btn btn-secondary btn-small" style="background: #dc3545; color: white;">Cancel</button>` :
+                        canManage && member.role !== 'owner' && !isPending ?
+                            `<button onclick="removeTeamMember('${member.user_id}')" class="btn btn-secondary btn-small" style="background: #dc3545; color: white;">Remove</button>` :
+                            ''
+                    }
                 </div>
             </div>
-            <div>
-                ${member.role === 'owner' ?
-                    '<span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">OWNER</span>' :
-                    canManage && member.role !== 'owner' ?
-                        `<button onclick="removeTeamMember('${member.user_id}')" class="btn btn-secondary btn-small" style="background: #dc3545; color: white;">Remove</button>` :
-                        ''
-                }
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Remove team member
@@ -404,6 +471,59 @@ async function removeTeamMember(userId) {
     } catch (error) {
         console.error('Error removing team member:', error);
         alert('Error removing team member: ' + error.message);
+    }
+}
+
+// Resend pending invitation
+async function resendPendingInvitation(email) {
+    if (!currentTeam) return;
+
+    try {
+        const response = await apiCall('teams/invite-member', {
+            method: 'POST',
+            body: JSON.stringify({
+                teamId: currentTeam.id,
+                email: email,
+                role: 'member', // Default role for resend
+                resend: true
+            })
+        });
+
+        if (response.success) {
+            const emailStatus = response.emailSent ? 'and email sent' : '(email delivery failed)';
+            alert(`Invitation resent to ${email} ${emailStatus}`);
+            loadTeamMembers(); // Refresh the list
+        }
+    } catch (error) {
+        console.error('Error resending invitation:', error);
+        alert('Error resending invitation: ' + error.message);
+    }
+}
+
+// Cancel pending invitation
+async function cancelInvitation(email) {
+    if (!currentTeam) return;
+
+    if (!confirm(`Are you sure you want to cancel the invitation for ${email}?`)) {
+        return;
+    }
+
+    try {
+        const response = await apiCall('teams/cancel-invitation', {
+            method: 'POST',
+            body: JSON.stringify({
+                teamId: currentTeam.id,
+                email: email
+            })
+        });
+
+        if (response.success) {
+            alert('Invitation cancelled successfully');
+            loadTeamMembers(); // Refresh the list
+        }
+    } catch (error) {
+        console.error('Error cancelling invitation:', error);
+        alert('Error cancelling invitation: ' + error.message);
     }
 }
 

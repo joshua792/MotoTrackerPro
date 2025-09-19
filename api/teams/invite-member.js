@@ -88,9 +88,12 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // Generate invitation token (needed for both new and resend)
+    const inviteToken = crypto.randomBytes(32).toString('hex');
+
     // Check if there's already a pending invitation
     const existingInviteQuery = `
-      SELECT id, expires_at
+      SELECT id, expires_at, token
       FROM team_invitations
       WHERE team_id = $1 AND email = $2 AND status = 'pending'
     `;
@@ -100,19 +103,72 @@ module.exports = async function handler(req, res) {
     if (existingInvite.rows.length > 0) {
       const expiresAt = new Date(existingInvite.rows[0].expires_at);
       if (expiresAt > new Date()) {
-        await pool.end();
-        return res.status(409).json({
-          error: 'A pending invitation already exists for this email',
-          expiresAt: expiresAt
-        });
+        // Check if this is a resend request
+        const resend = req.body.resend === true;
+
+        if (resend) {
+          // Update the existing invitation with new expiration and resend email
+          const newExpiresAt = new Date();
+          newExpiresAt.setDate(newExpiresAt.getDate() + 7);
+
+          await pool.query(
+            'UPDATE team_invitations SET expires_at = $1 WHERE id = $2',
+            [newExpiresAt, existingInvite.rows[0].id]
+          );
+
+          // Use existing token for resend
+          const existingToken = existingInvite.rows[0].token || inviteToken;
+
+          await pool.end();
+
+          // Send invitation email
+          const emailResult = await sendTeamInvitationEmail({
+            toEmail: email.toLowerCase(),
+            teamName: teamName,
+            inviterName: inviterName,
+            invitationToken: existingToken,
+            expiresAt: newExpiresAt
+          });
+
+          const response = {
+            success: true,
+            invitation: {
+              id: existingInvite.rows[0].id,
+              token: existingToken,
+              email: email.toLowerCase(),
+              teamName: teamName,
+              role: role,
+              expiresAt: newExpiresAt
+            },
+            message: 'Invitation resent successfully',
+            emailSent: emailResult.success,
+            resent: true
+          };
+
+          if (!emailResult.success) {
+            response.emailError = emailResult.error;
+            response.message += ' (Email delivery failed - please share the invitation link manually)';
+            console.warn('Failed to resend invitation email:', emailResult.error);
+          } else {
+            response.message += ' and email sent';
+          }
+
+          return res.json(response);
+        } else {
+          await pool.end();
+          return res.status(409).json({
+            error: 'A pending invitation already exists for this email',
+            expiresAt: expiresAt,
+            canResend: true
+          });
+        }
       } else {
         // Delete expired invitation
         await pool.query('DELETE FROM team_invitations WHERE id = $1', [existingInvite.rows[0].id]);
       }
     }
 
-    // Generate invitation token
-    const inviteToken = crypto.randomBytes(32).toString('hex');
+    // Set expiration date
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
 

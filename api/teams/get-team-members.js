@@ -52,7 +52,8 @@ module.exports = async function handler(req, res) {
         tm.invited_at,
         u.name,
         u.email,
-        u.created_at as user_created_at
+        u.created_at as user_created_at,
+        'member' as type
       FROM team_memberships tm
       JOIN users u ON tm.user_id = u.id
       WHERE tm.team_id = $1
@@ -66,6 +67,28 @@ module.exports = async function handler(req, res) {
     `;
 
     const membersResult = await pool.query(membersQuery, [teamId]);
+
+    // Get pending invitations (not yet accepted)
+    const pendingInvitationsQuery = `
+      SELECT
+        NULL as user_id,
+        'member' as role,
+        'pending' as status,
+        NULL as joined_at,
+        ti.created_at as invited_at,
+        'Pending User' as name,
+        ti.email,
+        ti.expires_at,
+        'invitation' as type
+      FROM team_invitations ti
+      WHERE ti.team_id = $1 AND ti.status = 'pending' AND ti.expires_at > NOW()
+      ORDER BY ti.created_at DESC
+    `;
+
+    const pendingResult = await pool.query(pendingInvitationsQuery, [teamId]);
+
+    // Combine members and pending invitations
+    const allMembers = [...membersResult.rows, ...pendingResult.rows];
 
     // Get team information
     const teamQuery = `
@@ -85,9 +108,10 @@ module.exports = async function handler(req, res) {
     res.json({
       success: true,
       team: teamResult.rows[0],
-      members: membersResult.rows,
-      totalMembers: membersResult.rows.length,
-      activeMembers: membersResult.rows.filter(m => m.status === 'active').length
+      members: allMembers,
+      totalMembers: allMembers.length,
+      activeMembers: membersResult.rows.filter(m => m.status === 'active').length,
+      pendingInvitations: pendingResult.rows.length
     });
 
   } catch (error) {
