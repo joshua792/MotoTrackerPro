@@ -539,6 +539,7 @@
                         <button class="btn btn-secondary" onclick="showAdminSection('users')" id="admin-users-tab">Users</button>
                         <button class="btn btn-secondary" onclick="showAdminSection('tracks')" id="admin-tracks-tab">Tracks</button>
                         <button class="btn btn-secondary" onclick="showAdminSection('series')" id="admin-series-tab">Race Series</button>
+                        <button class="btn btn-secondary" onclick="showAdminSection('plans')" id="admin-plans-tab">Subscription Plans</button>
                     </div>
                 </div>
 
@@ -583,6 +584,22 @@
 
                     <div id="race-series-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
                         <p>Click "Refresh Race Series List" to load race series</p>
+                    </div>
+                </div>
+
+                <!-- Subscription Plans Section -->
+                <div id="admin-plans-section" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h4>Subscription Plans Management</h4>
+                        <button class="btn btn-primary btn-small" onclick="showAddSubscriptionPlanModal()">+ Add Plan</button>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-secondary" onclick="loadSubscriptionPlansList()">Refresh Plans List</button>
+                    </div>
+
+                    <div id="subscription-plans-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                        <p>Click "Refresh Plans List" to load subscription plans</p>
                     </div>
                 </div>
             </div>
@@ -907,9 +924,76 @@
         </div>
     </div>
 
+    <!-- Subscription Plan Modal -->
+    <div id="subscription-plan-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeSubscriptionPlanModal()">&times;</span>
+            <div class="modal-header" id="subscription-plan-modal-title">Add New Subscription Plan</div>
+
+            <div class="form-group">
+                <label for="plan-key">Plan Key * (e.g., 'basic', 'premium')</label>
+                <input type="text" id="plan-key" placeholder="unique-plan-key" required maxlength="50">
+            </div>
+
+            <div class="form-group">
+                <label for="plan-name">Plan Name *</label>
+                <input type="text" id="plan-name" placeholder="e.g., Basic Plan" required maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <label for="plan-description">Description</label>
+                <textarea id="plan-description" placeholder="Brief description of the plan" rows="2"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label for="plan-price-monthly">Monthly Price ($) *</label>
+                    <input type="number" id="plan-price-monthly" placeholder="9.99" step="0.01" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="plan-price-yearly">Yearly Price ($)</label>
+                    <input type="number" id="plan-price-yearly" placeholder="99.99" step="0.01" min="0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="plan-usage-limit">Usage Limit (sessions per month)</label>
+                <input type="number" id="plan-usage-limit" placeholder="500 (leave empty for unlimited)" min="1">
+                <small style="color: #666;">Leave empty for unlimited usage</small>
+            </div>
+
+            <div class="form-group">
+                <label for="plan-features">Features (one per line)</label>
+                <textarea id="plan-features" placeholder="Feature 1&#10;Feature 2&#10;Feature 3" rows="4"></textarea>
+                <small style="color: #666;">Enter each feature on a new line</small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label for="plan-sort-order">Sort Order</label>
+                    <input type="number" id="plan-sort-order" placeholder="0" min="0" value="0">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="plan-active" checked>
+                        Active (visible to users)
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button class="btn btn-primary" onclick="saveSubscriptionPlan()" id="save-subscription-plan-btn">Add Plan</button>
+                <button class="btn btn-secondary" onclick="closeSubscriptionPlanModal()" style="margin-left: 10px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/subscription.js"></script>
+    <script src="js/subscription-plans.js"></script>
     <script src="js/weather.js"></script>
     <script src="js/motorcycles.js"></script>
     <script src="js/tracks.js"></script>

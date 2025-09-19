@@ -81,6 +81,27 @@ function hasReachedUsageLimit(user) {
   return user.usage_count >= user.usage_limit;
 }
 
+// Get plan details from database (async function)
+async function getPlanFromDatabase(planKey) {
+  try {
+    const { Pool } = require('pg');
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+
+    const query = 'SELECT * FROM subscription_plans WHERE plan_key = $1 AND is_active = TRUE';
+    const result = await pool.query(query, [planKey]);
+
+    await pool.end();
+
+    return result.rows.length > 0 ? result.rows[0] : null;
+  } catch (error) {
+    console.error('Error fetching plan from database:', error);
+    return null;
+  }
+}
+
 // Get days remaining in subscription
 function getDaysRemaining(user) {
   const now = new Date();
@@ -112,5 +133,6 @@ module.exports = {
   isSubscriptionActive,
   hasReachedUsageLimit,
   getDaysRemaining,
-  getUsagePercentage
+  getUsagePercentage,
+  getPlanFromDatabase
 };

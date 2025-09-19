@@ -256,8 +256,9 @@ function wrapApiCall() {
 
     const originalApiCall = window.apiCall;
     window.apiCall = async function(endpoint, options = {}) {
-        // Add auth headers if user is logged in
-        if (authToken && !endpoint.startsWith('auth/')) {
+        // Add auth headers if user is logged in (exclude only login/register/reset endpoints)
+        const publicEndpoints = ['auth/login', 'auth/register', 'auth/reset-password'];
+        if (authToken && !publicEndpoints.includes(endpoint)) {
             options.headers = {
                 ...getAuthHeaders(),
                 ...options.headers

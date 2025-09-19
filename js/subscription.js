@@ -121,6 +121,9 @@ function updateModalSubscriptionInfo() {
                         <div style="background: ${subscriptionData.usagePercentage > 80 ? '#d63384' : '#28a745'}; height: 100%; border-radius: 4px; width: ${subscriptionData.usagePercentage}%;"></div>
                     </div>
                 ` : '<p style="margin-bottom: 8px;"><strong>Usage:</strong> Unlimited</p>'}
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-secondary btn-small" onclick="manageSubscription()">Manage Subscription</button>
+                </div>
             </div>
         `;
 
@@ -149,18 +152,44 @@ async function selectPlan(planType) {
         return;
     }
 
-    // For now, show a placeholder message since Stripe integration isn't fully implemented
-    alert(`Stripe integration will be implemented here for the ${planType} plan.\n\nThis would:\n1. Create a Stripe checkout session\n2. Redirect to Stripe payment page\n3. Handle successful payment webhook\n4. Update subscription status`);
+    // Don't allow admins to purchase subscriptions
+    if (subscriptionData.status === 'admin') {
+        alert('Admin users have unlimited access and do not need subscriptions.');
+        return;
+    }
 
-    // TODO: Implement Stripe checkout
-    // const response = await apiCall('subscription/create-checkout-session', {
-    //     method: 'POST',
-    //     body: JSON.stringify({ plan: planType })
-    // });
+    // Don't allow active subscribers to purchase again (they can upgrade later)
+    if (subscriptionData.status === 'active') {
+        alert('You already have an active subscription. Subscription management features coming soon!');
+        return;
+    }
 
-    // if (response.success) {
-    //     window.location.href = response.checkout_url;
-    // }
+    const planButton = document.getElementById(`${planType}-plan-btn`);
+    const originalText = planButton.textContent;
+
+    try {
+        planButton.textContent = 'Loading...';
+        planButton.disabled = true;
+
+        // Create Stripe checkout session
+        const response = await apiCall('subscription/create-checkout-session', {
+            method: 'POST',
+            body: JSON.stringify({ plan: planType })
+        });
+
+        if (response.success) {
+            // Redirect to Stripe checkout
+            window.location.href = response.checkout_url;
+        } else {
+            alert('Error creating checkout session: ' + response.error);
+        }
+    } catch (error) {
+        console.error('Checkout error:', error);
+        alert('Error starting checkout: ' + error.message);
+    } finally {
+        planButton.textContent = originalText;
+        planButton.disabled = false;
+    }
 }
 
 // Update auth UI to include subscription status
@@ -209,3 +238,52 @@ function calculateDaysRemaining(user) {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return Math.max(0, diffDays);
 }
+
+// Manage subscription (opens Stripe customer portal)
+async function manageSubscription() {
+    try {
+        const response = await apiCall('subscription/manage', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'get_portal_url' })
+        });
+
+        if (response.success) {
+            // Open Stripe customer portal in new tab
+            window.open(response.portal_url, '_blank');
+        } else {
+            alert('Error opening subscription management: ' + response.error);
+        }
+    } catch (error) {
+        console.error('Manage subscription error:', error);
+        alert('Error opening subscription management: ' + error.message);
+    }
+}
+
+// Handle successful payment return from Stripe
+function handlePaymentSuccess() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    const success = urlParams.get('success');
+    const canceled = urlParams.get('canceled');
+
+    if (success === 'true' && sessionId) {
+        // Payment was successful
+        alert('🎉 Payment successful! Your subscription is now active. Welcome to MotoSetup Pro!');
+
+        // Reload subscription data and refresh the page
+        setTimeout(() => {
+            window.location.href = window.location.origin + window.location.pathname;
+        }, 2000);
+    } else if (canceled === 'true') {
+        // Payment was canceled
+        alert('Payment was canceled. You can try again anytime from the Subscription section.');
+
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
+// Initialize subscription handling on page load
+window.addEventListener('DOMContentLoaded', () => {
+    handlePaymentSuccess();
+});
