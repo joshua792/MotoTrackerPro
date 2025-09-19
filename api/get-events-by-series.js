@@ -28,15 +28,14 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Series parameter is required' });
     }
 
-    // Get all events for the specified series (not just user's events)
+    // Get all events for the specified series (regardless of owner)
     const query = `
       SELECT e.*, t.name as track_name, t.location as track_location,
-             COUNT(CASE WHEN s.user_id = $1 THEN 1 END) as user_sessions
+             CASE WHEN e.user_id = $1 THEN true ELSE false END as user_owns_event,
+             (SELECT COUNT(*) FROM sessions s WHERE s.event_id = e.id) as total_sessions
       FROM events e
       LEFT JOIN tracks t ON e.track_id = t.id
-      LEFT JOIN sessions s ON e.id = s.event_id
       WHERE e.series = $2
-      GROUP BY e.id, t.name, t.location
       ORDER BY e.date DESC
     `;
 
@@ -47,8 +46,8 @@ module.exports = async function handler(req, res) {
     // Add metadata to help user understand their relationship to each event
     const eventsWithMetadata = result.rows.map(event => ({
       ...event,
-      user_has_sessions: event.user_sessions > 0,
-      session_count: parseInt(event.user_sessions)
+      user_owns_event: event.user_owns_event,
+      session_count: parseInt(event.total_sessions || 0)
     }));
 
     res.json({

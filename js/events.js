@@ -84,11 +84,15 @@ async function filterEventsBySeries() {
 // Show existing events in selected series
 async function showExistingEventsInSeries(series) {
     try {
+        console.log('Fetching existing events for series:', series);
         const response = await apiCall(`get-events-by-series?series=${encodeURIComponent(series)}`);
+        console.log('Response from get-events-by-series:', response);
 
         if (response.success && response.events.length > 0) {
+            console.log('Found', response.events.length, 'existing events');
             displayExistingEvents(response.events, series);
         } else {
+            console.log('No existing events found for series:', series);
             hideExistingEventsDisplay();
         }
     } catch (error) {
@@ -128,7 +132,7 @@ function displayExistingEvents(seriesEvents, seriesName) {
             ${seriesEvents.map(event => {
                 const eventDate = new Date(event.date);
                 const isUpcoming = eventDate >= new Date();
-                const hasUserSessions = event.user_has_sessions;
+                const hasUserSessions = event.user_owns_event;
 
                 return `
                     <div class="existing-event-card ${hasUserSessions ? 'event-status-joined' : (isUpcoming ? 'event-status-upcoming' : 'event-status-past')}"

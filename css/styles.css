@@ -1143,3 +1143,8 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* Higher z-index for motorcycle modal when opened from settings */
+#motorcycle-modal {
+    z-index: 1100;
+}
