@@ -271,7 +271,7 @@ async function checkShowMainContent() {
     saveAppState();
     
     // Load track map when event is selected
-    loadTrackMap(currentEvent);
+    loadTrackMap(currentEvent?.id);
     
     if (currentMotorcycle && currentEvent) {
         document.getElementById('main-content').style.display = 'block';
@@ -382,7 +382,7 @@ async function loadAppData() {
         }
 
         // Initial track map load
-        loadTrackMap(currentEvent);
+        loadTrackMap(currentEvent?.id);
     } catch (error) {
         console.error('Error loading app data:', error);
         // If data loading fails due to auth issues, auth.js will handle logout
