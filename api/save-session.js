@@ -1,4 +1,12 @@
 import { Client } from 'pg';
+const jwt = require('jsonwebtoken');
+
+// Import subscription utilities
+const {
+  isSubscriptionActive,
+  hasReachedUsageLimit,
+  getDaysRemaining
+} = require('./subscription/config');
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -9,13 +17,63 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
-
+  // Verify authentication and subscription
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
+
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+
     await client.connect();
+
+    // Get user subscription data
+    const userQuery = `
+      SELECT id, subscription_status, trial_end_date, subscription_end_date,
+             usage_count, usage_limit, is_admin
+      FROM users WHERE id = $1
+    `;
+
+    const userResult = await client.query(userQuery, [decoded.userId]);
+
+    if (userResult.rows.length === 0) {
+      await client.end();
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Admin users bypass restrictions
+    if (!user.is_admin) {
+      // Check subscription status
+      const isActive = isSubscriptionActive(user);
+      const hasReachedLimit = hasReachedUsageLimit(user);
+
+      if (!isActive) {
+        await client.end();
+        return res.status(403).json({
+          error: 'Subscription expired',
+          message: 'Your subscription has expired. Please upgrade to continue saving sessions.'
+        });
+      }
+
+      if (hasReachedLimit) {
+        await client.end();
+        return res.status(403).json({
+          error: 'Usage limit reached',
+          message: 'You have reached your usage limit. Please upgrade your plan to continue.',
+          usageCount: user.usage_count,
+          usageLimit: user.usage_limit
+        });
+      }
+    }
     
     const sessionData = req.body;
     const sessionId = `${sessionData.event}_${sessionData.motorcycle.id}_${sessionData.session}`;
@@ -61,12 +119,34 @@ export default async function handler(req, res) {
       ]
     );
 
+    // Increment usage count for non-admin users
+    if (!user.is_admin) {
+      try {
+        await client.query(
+          'UPDATE users SET usage_count = usage_count + 1 WHERE id = $1',
+          [user.id]
+        );
+      } catch (usageError) {
+        console.error('Usage increment error:', usageError);
+        // Don't block the session save if usage increment fails
+      }
+    }
+
     await client.end();
     return res.status(200).json({ success: true, session: result.rows[0] });
 
   } catch (error) {
     console.error('Database error:', error);
     try { await client.end(); } catch {}
+
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
+
     return res.status(500).json({ error: 'Database error', details: error.message });
   }
 }

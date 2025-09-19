@@ -83,7 +83,15 @@ module.exports = async function handler(req, res) {
       email: user.email,
       team: user.team,
       is_admin: user.is_admin || false,
-      created_at: user.created_at
+      created_at: user.created_at,
+      subscription_status: user.subscription_status || 'trial',
+      subscription_plan: user.subscription_plan || 'basic',
+      trial_start_date: user.trial_start_date,
+      trial_end_date: user.trial_end_date,
+      subscription_start_date: user.subscription_start_date,
+      subscription_end_date: user.subscription_end_date,
+      usage_count: user.usage_count || 0,
+      usage_limit: user.usage_limit || 1000
     };
 
     console.log('Login successful for:', email);

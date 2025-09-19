@@ -13,9 +13,15 @@
             <p>Track your motorcycle setup changes throughout race weekend</p>
             <div style="position: absolute; top: 20px; right: 30px;">
                 <div id="auth-header" style="display: none;">
-                    <span id="user-welcome" style="margin-right: 10px; color: #666;"></span>
-                    <button class="btn btn-secondary btn-small" onclick="showSettingsModal()">Settings</button>
-                    <button class="btn btn-secondary btn-small" onclick="logout()" style="margin-left: 5px;">Logout</button>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="user-welcome" style="color: #666;"></span>
+                        <div id="subscription-status" style="font-size: 11px; padding: 2px 6px; border-radius: 3px; color: white;">
+                            <!-- Subscription status will be filled by JavaScript -->
+                        </div>
+                        <button class="btn btn-secondary btn-small" onclick="showSubscriptionModal()">Subscription</button>
+                        <button class="btn btn-secondary btn-small" onclick="showSettingsModal()">Settings</button>
+                        <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+                    </div>
                 </div>
                 <div id="login-header">
                     <button class="btn btn-primary btn-small" onclick="showAuthModal('login')">Login</button>
@@ -803,8 +809,55 @@
         </div>
     </div>
 
+    <!-- Subscription Modal -->
+    <div id="subscription-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeSubscriptionModal()">&times;</span>
+            <div class="modal-header">Subscription Management</div>
+
+            <div id="subscription-info" style="margin-bottom: 20px;">
+                <!-- Subscription details will be loaded here -->
+            </div>
+
+            <div id="subscription-plans" style="display: none;">
+                <h3 style="margin-bottom: 15px;">Available Plans</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="plan-card" style="border: 2px solid #ddd; border-radius: 8px; padding: 20px; text-align: center;">
+                        <h4 style="color: #2c5aa0; margin-bottom: 10px;">Basic Plan</h4>
+                        <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">$9.99/month</div>
+                        <ul style="text-align: left; margin-bottom: 15px; padding-left: 20px;">
+                            <li>5,000 session saves per month</li>
+                            <li>Track map access</li>
+                            <li>Weather integration</li>
+                            <li>Previous track data</li>
+                            <li>Export capabilities</li>
+                        </ul>
+                        <button class="btn btn-primary" onclick="selectPlan('basic')" id="basic-plan-btn">Select Basic</button>
+                    </div>
+                    <div class="plan-card" style="border: 2px solid #2c5aa0; border-radius: 8px; padding: 20px; text-align: center;">
+                        <h4 style="color: #2c5aa0; margin-bottom: 10px;">Premium Plan</h4>
+                        <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">$19.99/month</div>
+                        <ul style="text-align: left; margin-bottom: 15px; padding-left: 20px;">
+                            <li>Unlimited session saves</li>
+                            <li>Everything in Basic</li>
+                            <li>Priority support</li>
+                            <li>Advanced analytics</li>
+                            <li>Team collaboration</li>
+                        </ul>
+                        <button class="btn btn-primary" onclick="selectPlan('premium')" id="premium-plan-btn">Select Premium</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button class="btn btn-secondary" onclick="closeSubscriptionModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/subscription.js"></script>
     <script src="js/weather.js"></script>
     <script src="js/motorcycles.js"></script>
     <script src="js/tracks.js"></script>

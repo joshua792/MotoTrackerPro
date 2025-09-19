@@ -167,6 +167,11 @@ function updateAuthUI() {
         document.getElementById('user-welcome').textContent = `Welcome, ${currentUser.name}`;
         document.getElementById('app-content').style.display = 'block';
         document.getElementById('welcome-message').style.display = 'none';
+
+        // Update subscription status in header if subscription.js is loaded
+        if (typeof updateAuthUIWithSubscription === 'function') {
+            updateAuthUIWithSubscription();
+        }
     } else {
         document.getElementById('login-header').style.display = 'block';
         document.getElementById('auth-header').style.display = 'none';

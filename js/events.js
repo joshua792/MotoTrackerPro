@@ -29,7 +29,7 @@ function updateSeriesDropdown() {
     
     // Add predefined series options
     const predefinedSeries = [
-        'MotoAmerica', 'WERA', 'CMRA', 'AFM', 'CRA', 'NESBA', 
+        'MotoAmerica', 'WERA', 'CMRA', 'AFM', 'American Flat Track' 'CRA', 'NESBA', 
         'LRRS', 'CCS', 'WMRRA', 'Other'
     ];
     

@@ -180,9 +180,78 @@ async function saveSession() {
         });
 
         showSaveConfirmation();
+
+        // Check subscription status and show upgrade prompts if needed
+        await checkUsageAndShowPrompts();
     } catch (error) {
         console.error('Error saving session:', error);
-        alert('Error saving session. Please try again.');
+
+        // Check for subscription-related errors
+        if (error.message.includes('Subscription expired')) {
+            alert('Your subscription has expired. Please upgrade to continue saving sessions.');
+            if (typeof showSubscriptionModal === 'function') {
+                showSubscriptionModal();
+            }
+        } else if (error.message.includes('Usage limit reached')) {
+            alert('You have reached your usage limit. Please upgrade your plan to continue.');
+            if (typeof showSubscriptionModal === 'function') {
+                showSubscriptionModal();
+            }
+        } else {
+            alert('Error saving session. Please try again.');
+        }
+    }
+}
+
+// Check usage and show upgrade prompts if needed
+async function checkUsageAndShowPrompts() {
+    try {
+        // Load current subscription status
+        if (typeof loadSubscriptionStatus === 'function') {
+            await loadSubscriptionStatus();
+        }
+
+        // If no subscription data available, skip prompts
+        if (!subscriptionData) return;
+
+        // Show trial expiration warning
+        if (subscriptionData.status === 'trial' && subscriptionData.daysRemaining <= 7) {
+            if (subscriptionData.daysRemaining <= 3) {
+                // Urgent warning for last 3 days
+                if (confirm(`⚠️ Your trial expires in ${subscriptionData.daysRemaining} day(s)!\n\nUpgrade now to avoid losing access to your data.\n\nWould you like to see upgrade options?`)) {
+                    if (typeof showSubscriptionModal === 'function') {
+                        showSubscriptionModal();
+                    }
+                }
+            } else if (Math.random() < 0.3) { // 30% chance to show warning
+                if (confirm(`Your trial expires in ${subscriptionData.daysRemaining} days.\n\nUpgrade now to continue using all features.\n\nWould you like to see upgrade options?`)) {
+                    if (typeof showSubscriptionModal === 'function') {
+                        showSubscriptionModal();
+                    }
+                }
+            }
+        }
+
+        // Show usage limit warnings
+        if (subscriptionData.usageLimit && subscriptionData.usagePercentage >= 80) {
+            if (subscriptionData.usagePercentage >= 95) {
+                // Urgent warning at 95%
+                if (confirm(`⚠️ You've used ${Math.round(subscriptionData.usagePercentage)}% of your monthly limit!\n\nUpgrade to unlimited usage.\n\nWould you like to see upgrade options?`)) {
+                    if (typeof showSubscriptionModal === 'function') {
+                        showSubscriptionModal();
+                    }
+                }
+            } else if (subscriptionData.usagePercentage >= 80 && Math.random() < 0.2) { // 20% chance at 80%
+                if (confirm(`You've used ${Math.round(subscriptionData.usagePercentage)}% of your monthly limit.\n\nConsider upgrading for unlimited usage.\n\nWould you like to see upgrade options?`)) {
+                    if (typeof showSubscriptionModal === 'function') {
+                        showSubscriptionModal();
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking usage and showing prompts:', error);
+        // Don't block the user if prompt checking fails
     }
 }
 
