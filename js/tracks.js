@@ -137,9 +137,14 @@ async function loadTrackMap(eventId) {
                     console.log('🔍 STEP 14: Looking for loading div, found:', !!loadingDiv);
                     if (loadingDiv) {
                         loadingDiv.innerHTML = `
-                            <img src="${imageUrl}"
-                                 alt="Track map for ${track.name}"
-                                 style="max-width: 100%; max-height: 400px; border: 1px solid #ddd; border-radius: 4px;">
+                            <div style="text-align: center; cursor: pointer;" onclick="openTrackMapModal('${imageUrl}', '${track.name.replace(/'/g, '\\\'')}')" title="Click to view full-size track map">
+                                <img src="${imageUrl}"
+                                     alt="Track map for ${track.name}"
+                                     style="max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                                <div style="color: #666; font-size: 12px; margin-top: 5px;">
+                                    🔍 Click to view full-size map
+                                </div>
+                            </div>
                         `;
                         console.log('✅ STEP 14 PASSED: Image HTML set in loading div');
                     }
@@ -170,6 +175,67 @@ async function loadTrackMap(eventId) {
     } catch (error) {
         console.error('💥 FATAL ERROR: Error loading track map:', error);
         container.innerHTML = '<div class="track-map-placeholder"><p style="color: #d63384;">Error loading track information</p></div>';
+    }
+}
+
+// Open track map in full-size modal
+function openTrackMapModal(imageUrl, trackName) {
+    console.log('🖼️ Opening track map modal for:', trackName);
+
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('track-map-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'track-map-modal';
+        modal.style.cssText = `
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            cursor: pointer;
+        `;
+
+        modal.innerHTML = `
+            <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                <div style="position: absolute; top: 20px; right: 30px; color: white; font-size: 28px; font-weight: bold; cursor: pointer; z-index: 1001;" onclick="closeTrackMapModal()">
+                    ×
+                </div>
+                <div style="position: absolute; top: 20px; left: 30px; color: white; font-size: 18px; font-weight: bold; z-index: 1001;" id="modal-track-name">
+                </div>
+                <img id="modal-track-image" style="max-width: 95%; max-height: 95%; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+                <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: white; font-size: 14px; text-align: center;">
+                    Click outside image or X to close
+                </div>
+            </div>
+        `;
+
+        // Close modal when clicking outside the image
+        modal.onclick = closeTrackMapModal;
+
+        document.body.appendChild(modal);
+    }
+
+    // Update modal content
+    document.getElementById('modal-track-name').textContent = trackName;
+    document.getElementById('modal-track-image').src = imageUrl;
+    document.getElementById('modal-track-image').alt = `Full-size track map for ${trackName}`;
+
+    // Show modal
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+// Close track map modal
+function closeTrackMapModal() {
+    console.log('🖼️ Closing track map modal');
+    const modal = document.getElementById('track-map-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restore scrolling
     }
 }
 
