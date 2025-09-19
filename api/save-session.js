@@ -84,6 +84,32 @@ export default async function handler(req, res) {
       return str.toString().substring(0, maxLength);
     };
 
+    // Debug logging to identify long fields
+    console.log('=== Session Data Debug ===');
+    console.log('sessionId length:', sessionId.length, 'value:', sessionId);
+    console.log('event length:', sessionData.event ? sessionData.event.length : 0, 'value:', sessionData.event);
+    console.log('session length:', sessionData.session ? sessionData.session.length : 0, 'value:', sessionData.session);
+    console.log('frontTire length:', sessionData.frontTire ? sessionData.frontTire.length : 0, 'value:', sessionData.frontTire);
+    console.log('rearTire length:', sessionData.rearTire ? sessionData.rearTire.length : 0, 'value:', sessionData.rearTire);
+    console.log('weatherCondition length:', sessionData.weatherCondition ? sessionData.weatherCondition.length : 0, 'value:', sessionData.weatherCondition);
+    console.log('weatherDescription length:', sessionData.weatherDescription ? sessionData.weatherDescription.length : 0);
+    console.log('notes length:', sessionData.notes ? sessionData.notes.length : 0);
+    console.log('feedback length:', sessionData.feedback ? sessionData.feedback.length : 0);
+
+    // Check all potentially long fields
+    const checkLength = (field, value, name) => {
+      if (value && value.toString().length > 100) {
+        console.log(`WARNING: ${name} is ${value.toString().length} chars:`, value);
+      }
+    };
+
+    Object.keys(sessionData).forEach(key => {
+      if (sessionData[key] && typeof sessionData[key] === 'string' && sessionData[key].length > 50) {
+        console.log(`Long field ${key}: ${sessionData[key].length} chars -`, sessionData[key].substring(0, 100) + '...');
+      }
+    });
+    console.log('=== End Debug ===');
+
     const result = await client.query(
       `INSERT INTO sessions (
         id, event_id, motorcycle_id, session_type,
