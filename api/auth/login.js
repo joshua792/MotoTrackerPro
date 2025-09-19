@@ -52,7 +52,8 @@ module.exports = async function handler(req, res) {
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS usage_count INTEGER DEFAULT 0",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS usage_limit INTEGER DEFAULT 1000"
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS usage_limit INTEGER DEFAULT 1000",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE"
       ];
 
       for (const addColumn of addColumns) {
@@ -118,7 +119,8 @@ module.exports = async function handler(req, res) {
       subscription_start_date: user.subscription_start_date,
       subscription_end_date: user.subscription_end_date,
       usage_count: user.usage_count || 0,
-      usage_limit: user.usage_limit || 1000
+      usage_limit: user.usage_limit || 1000,
+      email_verified: user.email_verified || false
     };
 
     console.log('Login successful for:', email);

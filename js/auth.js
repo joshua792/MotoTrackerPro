@@ -8,6 +8,17 @@ let authToken = null;
 window.addEventListener('DOMContentLoaded', initAuth);
 
 async function initAuth() {
+    // Check for email verification in URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const verifyToken = urlParams.get('verify');
+
+    if (verifyToken) {
+        await handleEmailVerification(verifyToken);
+        // Remove verify parameter from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+    }
+
     // Check for existing session
     const token = localStorage.getItem('authToken');
     const user = localStorage.getItem('currentUser');
@@ -21,6 +32,37 @@ async function initAuth() {
         await verifyTokenAndLoadData();
     } else {
         showLoginRequired();
+    }
+}
+
+// Handle email verification from URL
+async function handleEmailVerification(token) {
+    try {
+        const response = await apiCall('auth/verify-email', {
+            method: 'POST',
+            body: JSON.stringify({ token })
+        });
+
+        if (response.success) {
+            if (response.alreadyVerified) {
+                alert('Email already verified! Please login to continue.');
+            } else {
+                alert('Email verified successfully! You now have full access to all features. Please login to continue.');
+            }
+            showAuthModal('login');
+        }
+    } catch (error) {
+        console.error('Email verification error:', error);
+        if (error.message.includes('expired')) {
+            alert('Verification link has expired. Please login and request a new verification email.');
+            showAuthModal('login');
+        } else if (error.message.includes('Invalid')) {
+            alert('Invalid verification link. Please check your email for the correct link.');
+            showAuthModal('login');
+        } else {
+            alert('Email verification failed: ' + error.message);
+            showAuthModal('login');
+        }
     }
 }
 
@@ -137,7 +179,11 @@ async function register() {
         });
 
         if (response.success) {
-            alert('Registration successful! Please login with your new account.');
+            if (response.emailSent) {
+                alert('Registration successful! Please check your email to verify your account, then login.');
+            } else {
+                alert('Registration successful! Email verification will be sent shortly. Please login and check your email.');
+            }
             showAuthModal('login');
         }
     } catch (error) {

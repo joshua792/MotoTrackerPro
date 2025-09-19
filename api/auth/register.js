@@ -1,6 +1,8 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { sendVerificationEmail } = require('../email/send-verification');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -64,7 +66,11 @@ module.exports = async function handler(req, res) {
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS usage_count INTEGER DEFAULT 0",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS usage_limit INTEGER DEFAULT 1000"
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS usage_limit INTEGER DEFAULT 1000",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token VARCHAR(255)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_expires TIMESTAMP",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_sent_at TIMESTAMP"
       ];
 
       for (const addColumn of addColumns) {
@@ -94,18 +100,25 @@ module.exports = async function handler(req, res) {
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date();
+    verificationExpires.setHours(verificationExpires.getHours() + 24); // 24 hour expiration
+
     // Calculate trial end date (14 days from now)
     const trialEndDate = new Date();
     trialEndDate.setDate(trialEndDate.getDate() + 14);
 
-    // Insert new user with trial subscription
+    // Insert new user with trial subscription and verification token
     const insertUserQuery = `
       INSERT INTO users (name, email, password_hash, team, created_at, updated_at,
                         subscription_status, subscription_plan, trial_start_date, trial_end_date,
-                        usage_count, usage_limit)
-      VALUES ($1, $2, $3, $4, NOW(), NOW(), 'trial', 'basic', NOW(), $5, 0, 1000)
+                        usage_count, usage_limit, email_verified, email_verification_token,
+                        email_verification_expires, email_verification_sent_at)
+      VALUES ($1, $2, $3, $4, NOW(), NOW(), 'trial', 'basic', NOW(), $5, 0, 1000, FALSE, $6, $7, NOW())
       RETURNING id, name, email, team, created_at, subscription_status,
-                subscription_plan, trial_start_date, trial_end_date, usage_count, usage_limit
+                subscription_plan, trial_start_date, trial_end_date, usage_count, usage_limit,
+                email_verified, email_verification_token
     `;
 
     const result = await pool.query(insertUserQuery, [
@@ -113,14 +126,33 @@ module.exports = async function handler(req, res) {
       email.toLowerCase(),
       passwordHash,
       team || null,
-      trialEndDate
+      trialEndDate,
+      verificationToken,
+      verificationExpires
     ]);
 
     await pool.end();
 
     const newUser = result.rows[0];
 
-    console.log('Registration successful for:', email);
+    // Send verification email
+    let emailSent = false;
+    try {
+      const emailResult = await sendVerificationEmail({
+        toEmail: newUser.email,
+        userName: newUser.name,
+        verificationToken: newUser.email_verification_token
+      });
+      emailSent = emailResult.success;
+
+      if (!emailSent) {
+        console.warn('Failed to send verification email:', emailResult.error);
+      }
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+    }
+
+    console.log('Registration successful for:', email, emailSent ? '(verification email sent)' : '(email failed)');
 
     res.json({
       success: true,
@@ -135,9 +167,13 @@ module.exports = async function handler(req, res) {
         trial_start_date: newUser.trial_start_date,
         trial_end_date: newUser.trial_end_date,
         usage_count: newUser.usage_count,
-        usage_limit: newUser.usage_limit
+        usage_limit: newUser.usage_limit,
+        email_verified: newUser.email_verified
       },
-      message: 'Registration successful - 14-day trial activated'
+      message: emailSent
+        ? 'Registration successful! Please check your email to verify your account.'
+        : 'Registration successful! Email verification will be sent shortly.',
+      emailSent: emailSent
     });
 
   } catch (error) {
