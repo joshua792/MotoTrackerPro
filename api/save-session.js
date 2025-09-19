@@ -113,14 +113,14 @@ export default async function handler(req, res) {
        RETURNING *`,
       [
         truncateString(sessionId, 255), sessionData.event, sessionData.motorcycle.id, truncateString(sessionData.session, 100),
-        truncateString(sessionData.frontSpring, 50), truncateString(sessionData.frontPreload, 50), truncateString(sessionData.frontCompression, 50), truncateString(sessionData.frontRebound, 50),
-        truncateString(sessionData.rearSpring, 50), truncateString(sessionData.rearPreload, 50), truncateString(sessionData.rearCompression, 50), truncateString(sessionData.rearRebound, 50),
-        truncateString(sessionData.frontSprocket, 50), truncateString(sessionData.rearSprocket, 50), truncateString(sessionData.swingarmLength, 50),
-        truncateString(sessionData.frontTire, 150), truncateString(sessionData.rearTire, 150), truncateString(sessionData.frontPressure, 50), truncateString(sessionData.rearPressure, 50),
-        truncateString(sessionData.rake, 50), truncateString(sessionData.trail, 50), truncateString(sessionData.notes, 1000), truncateString(sessionData.feedback, 1000),
-        truncateString(sessionData.frontRideHeight, 50), truncateString(sessionData.rearRideHeight, 50), truncateString(sessionData.frontSag, 50), truncateString(sessionData.rearSag, 50),
-        truncateString(sessionData.swingarmAngle, 50), truncateString(sessionData.weatherTemperature, 50), truncateString(sessionData.weatherCondition, 150),
-        truncateString(sessionData.weatherDescription, 500), truncateString(sessionData.weatherHumidity, 50), truncateString(sessionData.weatherWindSpeed, 50),
+        truncateString(sessionData.frontSpring, 100), truncateString(sessionData.frontPreload, 100), truncateString(sessionData.frontCompression, 100), truncateString(sessionData.frontRebound, 100),
+        truncateString(sessionData.rearSpring, 100), truncateString(sessionData.rearPreload, 100), truncateString(sessionData.rearCompression, 100), truncateString(sessionData.rearRebound, 100),
+        truncateString(sessionData.frontSprocket, 100), truncateString(sessionData.rearSprocket, 100), truncateString(sessionData.swingarmLength, 100),
+        truncateString(sessionData.frontTire, 150), truncateString(sessionData.rearTire, 150), truncateString(sessionData.frontPressure, 100), truncateString(sessionData.rearPressure, 100),
+        truncateString(sessionData.rake, 100), truncateString(sessionData.trail, 100), truncateString(sessionData.notes, 1000), truncateString(sessionData.feedback, 1000),
+        truncateString(sessionData.frontRideHeight, 100), truncateString(sessionData.rearRideHeight, 100), truncateString(sessionData.frontSag, 100), truncateString(sessionData.rearSag, 100),
+        truncateString(sessionData.swingarmAngle, 100), truncateString(sessionData.weatherTemperature, 100), truncateString(sessionData.weatherCondition, 150),
+        truncateString(sessionData.weatherDescription, 1000), truncateString(sessionData.weatherHumidity, 100), truncateString(sessionData.weatherWindSpeed, 100),
         sessionData.weatherCapturedAt || null
       ]
     );
