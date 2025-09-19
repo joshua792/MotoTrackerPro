@@ -48,7 +48,7 @@ async function sendTeamInvitationEmail({
     <body>
         <div class="container">
             <div class="header">
-                <h1>🏍️ MotoSetup Pro</h1>
+                <h1>MotoSetup Pro</h1>
                 <h2>Team Invitation</h2>
             </div>
 
@@ -70,7 +70,7 @@ async function sendTeamInvitationEmail({
                 </div>
 
                 <div class="warning">
-                    <strong>⏰ Important:</strong> This invitation expires on <strong>${expiresDate}</strong>.
+                    <strong>Important:</strong> This invitation expires on <strong>${expiresDate}</strong>.
                     You must have a MotoSetup Pro account to accept this invitation.
                 </div>
 
