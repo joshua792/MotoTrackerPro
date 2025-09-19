@@ -76,7 +76,8 @@ export default async function handler(req, res) {
     }
     
     const sessionData = req.body;
-    const sessionId = `${sessionData.event}_${sessionData.motorcycle.id}_${sessionData.session}`;
+    const eventId = sessionData.event?.id || sessionData.event;
+    const sessionId = `${eventId}_${sessionData.motorcycle.id}_${sessionData.session}`;
 
     // Helper function to truncate strings to avoid database constraint errors
     const truncateString = (str, maxLength) => {
@@ -86,26 +87,28 @@ export default async function handler(req, res) {
 
     // Debug logging to identify long fields
     console.log('=== Session Data Debug ===');
+    console.log('Full sessionData:', JSON.stringify(sessionData, null, 2));
     console.log('sessionId length:', sessionId.length, 'value:', sessionId);
-    console.log('event length:', sessionData.event ? sessionData.event.length : 0, 'value:', sessionData.event);
-    console.log('session length:', sessionData.session ? sessionData.session.length : 0, 'value:', sessionData.session);
-    console.log('frontTire length:', sessionData.frontTire ? sessionData.frontTire.length : 0, 'value:', sessionData.frontTire);
-    console.log('rearTire length:', sessionData.rearTire ? sessionData.rearTire.length : 0, 'value:', sessionData.rearTire);
-    console.log('weatherCondition length:', sessionData.weatherCondition ? sessionData.weatherCondition.length : 0, 'value:', sessionData.weatherCondition);
-    console.log('weatherDescription length:', sessionData.weatherDescription ? sessionData.weatherDescription.length : 0);
-    console.log('notes length:', sessionData.notes ? sessionData.notes.length : 0);
-    console.log('feedback length:', sessionData.feedback ? sessionData.feedback.length : 0);
+    console.log('motorcycle.id:', sessionData.motorcycle?.id, 'length:', sessionData.motorcycle?.id ? sessionData.motorcycle.id.toString().length : 0);
 
-    // Check all potentially long fields
-    const checkLength = (field, value, name) => {
-      if (value && value.toString().length > 100) {
-        console.log(`WARNING: ${name} is ${value.toString().length} chars:`, value);
-      }
-    };
+    // Log ALL the exact values being sent to database
+    const dbValues = [
+      truncateString(sessionId, 255), eventId, sessionData.motorcycle.id, truncateString(sessionData.session, 100),
+      truncateString(sessionData.frontSpring, 100), truncateString(sessionData.frontPreload, 100), truncateString(sessionData.frontCompression, 100), truncateString(sessionData.frontRebound, 100),
+      truncateString(sessionData.rearSpring, 100), truncateString(sessionData.rearPreload, 100), truncateString(sessionData.rearCompression, 100), truncateString(sessionData.rearRebound, 100),
+      truncateString(sessionData.frontSprocket, 100), truncateString(sessionData.rearSprocket, 100), truncateString(sessionData.swingarmLength, 100),
+      truncateString(sessionData.frontTire, 150), truncateString(sessionData.rearTire, 150), truncateString(sessionData.frontPressure, 100), truncateString(sessionData.rearPressure, 100),
+      truncateString(sessionData.rake, 100), truncateString(sessionData.trail, 100), truncateString(sessionData.notes, 1000), truncateString(sessionData.feedback, 1000),
+      truncateString(sessionData.frontRideHeight, 100), truncateString(sessionData.rearRideHeight, 100), truncateString(sessionData.frontSag, 100), truncateString(sessionData.rearSag, 100),
+      truncateString(sessionData.swingarmAngle, 100), truncateString(sessionData.weatherTemperature, 100), truncateString(sessionData.weatherCondition, 150),
+      truncateString(sessionData.weatherDescription, 1000), truncateString(sessionData.weatherHumidity, 100), truncateString(sessionData.weatherWindSpeed, 100),
+      sessionData.weatherCapturedAt || null
+    ];
 
-    Object.keys(sessionData).forEach(key => {
-      if (sessionData[key] && typeof sessionData[key] === 'string' && sessionData[key].length > 50) {
-        console.log(`Long field ${key}: ${sessionData[key].length} chars -`, sessionData[key].substring(0, 100) + '...');
+    console.log('Database values being inserted:');
+    dbValues.forEach((val, index) => {
+      if (val && val.toString().length > 150) {
+        console.log(`Value ${index} is ${val.toString().length} chars:`, val);
       }
     });
     console.log('=== End Debug ===');
