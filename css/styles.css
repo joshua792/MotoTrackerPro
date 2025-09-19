@@ -70,19 +70,14 @@ body {
     gap: 20px;
 }
 
-.event-section, .motorcycle-section {
+.event-section, .motorcycle-section, .track-map-section {
     background: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.track-map-section {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    height: fit-content;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
 .section-header {
@@ -157,16 +152,21 @@ body {
 
 /* Track Map Placeholder */
 #track-map-container {
-    min-height: 200px;
+    flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .track-map-placeholder {
     text-align: center;
     color: #666;
     font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    flex-direction: column;
 }
 
 .track-map {
@@ -621,12 +621,6 @@ body {
     gap: 30px;
 }
 
-.event-section, .motorcycle-section {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
 
 .section-header {
     display: flex;

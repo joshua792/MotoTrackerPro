@@ -177,12 +177,12 @@
                                     </div>
                                 </div>
                                 <div class="input-group">
-                                    <label>Rake:</label>
-                                    <input type="text" id="rake" placeholder="Rake angle" style="width: 100px;">
-                                </div>
-                                <div class="input-group">
-                                    <label>Trail:</label>
-                                    <input type="text" id="trail" placeholder="Trail measurement" style="width: 100px;">
+                                    <label>Front Sprocket:</label>
+                                    <div class="number-input-container">
+                                        <button class="increment-btn" onclick="changeValue('front-sprocket', -1, 10, 20, 1)">−</button>
+                                        <input type="number" id="front-sprocket" class="number-input" min="10" max="20" step="1" placeholder="10">
+                                        <button class="increment-btn" onclick="changeValue('front-sprocket', 1, 10, 20, 1)">+</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -240,24 +240,12 @@
                                     </div>
                                 </div>
                                 <div class="input-group">
-                                    <label>Front Sprocket:</label>
-                                    <div class="number-input-container">
-                                        <button class="increment-btn" onclick="changeValue('front-sprocket', -1, 10, 20, 1)">−</button>
-                                        <input type="number" id="front-sprocket" class="number-input" min="10" max="20" step="1" placeholder="10">
-                                        <button class="increment-btn" onclick="changeValue('front-sprocket', 1, 10, 20, 1)">+</button>
-                                    </div>
-                                </div>
-                                <div class="input-group">
                                     <label>Rear Sprocket:</label>
                                     <div class="number-input-container">
                                         <button class="increment-btn" onclick="changeValue('rear-sprocket', -1, 30, 60, 1)">−</button>
                                         <input type="number" id="rear-sprocket" class="number-input" min="30" max="60" step="1" placeholder="30">
                                         <button class="increment-btn" onclick="changeValue('rear-sprocket', 1, 30, 60, 1)">+</button>
                                     </div>
-                                </div>
-                                <div class="input-group">
-                                    <label>Swingarm (mm):</label>
-                                    <input type="number" id="swingarm-length" min="1" step="1" placeholder="Length in mm" style="width: 100px;">
                                 </div>
                             </div>
                         </div>
@@ -280,6 +268,14 @@
                                         <label>Sag (mm):</label>
                                         <input type="number" id="front-sag" placeholder="Front sag" style="width: 100px;">
                                     </div>
+                                    <div class="input-group">
+                                        <label>Rake:</label>
+                                        <input type="text" id="rake" placeholder="Rake angle" style="width: 100px;">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Trail:</label>
+                                        <input type="text" id="trail" placeholder="Trail measurement" style="width: 100px;">
+                                    </div>
                                 </div>
                             </div>
                             <div class="setup-section">
@@ -296,6 +292,10 @@
                                     <div class="input-group">
                                         <label>Swingarm Angle:</label>
                                         <input type="text" id="swingarm-angle" placeholder="Swingarm angle" style="width: 100px;">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Swingarm Length (mm):</label>
+                                        <input type="number" id="swingarm-length" min="1" step="1" placeholder="Length in mm" style="width: 100px;">
                                     </div>
                                 </div>
                             </div>

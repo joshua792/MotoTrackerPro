@@ -58,32 +58,19 @@ async function loadTrackMap(eventId) {
             return;
         }
 
-        // Build track info HTML
-        let trackInfoHtml = `
-            <div style="border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px;">
-                <div style="font-weight: bold; font-size: 16px; color: #2c5aa0; margin-bottom: 5px;">
-                    ${track.name}
-                </div>
-                <div style="color: #666; font-size: 14px; margin-bottom: 5px;">
-                    📍 ${track.location}${track.country ? ', ' + track.country : ''}
-                </div>
-                ${track.description ? `<div style="color: #666; font-size: 12px; margin-bottom: 5px;">${track.description}</div>` : ''}
-                <div style="color: #666; font-size: 12px;">
-                    ${track.length_miles ? `Length: ${track.length_miles} mi` : ''}
-                    ${track.length_km ? ` (${track.length_km} km)` : ''}
-                    ${track.turns ? ` • ${track.turns} turns` : ''}
-                    ${track.direction ? ` • ${track.direction}` : ''}
-                </div>
-            </div>
-        `;
+        // Build track layout with image first, then info below
+        let trackContentHtml = '';
 
         // Check if track has a map
         if (track.track_map_filename) {
-            // Show loading placeholder for the image
-            trackInfoHtml += '<div id="track-map-loading" style="text-align: center; padding: 20px;"><p>Loading track map...</p></div>';
-
-            // Set the HTML first, then load the image
-            container.innerHTML = trackInfoHtml;
+            // Show image loading placeholder first
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; height: 100%;">
+                    <div id="track-map-loading" style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                        <p>Loading track map...</p>
+                    </div>
+                </div>
+            `;
 
             // Fetch the image with authentication
             try {
@@ -96,36 +83,74 @@ async function loadTrackMap(eventId) {
                     const blob = await response.blob();
                     const imageUrl = URL.createObjectURL(blob);
 
-                    // Replace the loading placeholder with the actual image
-                    const loadingDiv = document.getElementById('track-map-loading');
-                    if (loadingDiv) {
-                        loadingDiv.innerHTML = `
-                            <div style="text-align: center; cursor: pointer;" onclick="openTrackMapModal('${imageUrl}', '${track.name.replace(/'/g, '\\\'')}')" title="Click to view full-size track map">
-                                <img src="${imageUrl}"
-                                     alt="Track map for ${track.name}"
-                                     style="max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
-                                <div style="color: #666; font-size: 12px; margin-top: 5px;">
-                                    🔍 Click to view full-size map
+                    // Build the complete layout with image on top and info below
+                    container.innerHTML = `
+                        <div style="display: flex; flex-direction: column; height: 100%;">
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                                <div style="text-align: center; cursor: pointer;" onclick="openTrackMapModal('${imageUrl}', '${track.name.replace(/'/g, '\\\'')}')" title="Click to view full-size track map">
+                                    <img src="${imageUrl}"
+                                         alt="Track map for ${track.name}"
+                                         style="max-width: 100%; max-height: 100%; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                                    <div style="color: #666; font-size: 11px; margin-top: 3px;">
+                                        🔍 Click to view full-size
+                                    </div>
                                 </div>
                             </div>
-                        `;
-                    }
+                            <div style="border-top: 1px solid #eee; padding-top: 10px;">
+                                <div style="font-weight: bold; font-size: 14px; color: #2c5aa0; margin-bottom: 3px;">
+                                    ${track.name}
+                                </div>
+                                <div style="color: #666; font-size: 12px; margin-bottom: 3px;">
+                                    📍 ${track.location}${track.country ? ', ' + track.country : ''}
+                                </div>
+                                ${track.description ? `<div style="color: #666; font-size: 11px; margin-bottom: 3px;">${track.description}</div>` : ''}
+                                <div style="color: #666; font-size: 11px;">
+                                    ${track.length_miles ? `${track.length_miles} mi` : ''}
+                                    ${track.length_km ? ` (${track.length_km} km)` : ''}
+                                    ${track.turns ? ` • ${track.turns} turns` : ''}
+                                    ${track.direction ? ` • ${track.direction}` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 } else {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (imageError) {
                 console.error('Error loading track map image:', imageError);
-                const loadingDiv = document.getElementById('track-map-loading');
-                if (loadingDiv) {
-                    loadingDiv.innerHTML = '<p style="color: #d63384;">Error loading track map: ' + imageError.message + '</p>';
-                }
+                container.innerHTML = `
+                    <div class="track-map-placeholder">
+                        <p style="color: #d63384;">Error loading track map</p>
+                        <small>${imageError.message}</small>
+                    </div>
+                `;
             }
             return; // Early return since we've already set the HTML
         } else {
-            trackInfoHtml += '<div class="track-map-placeholder"><p>No track map available</p></div>';
+            // No track map available - show track info only
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; height: 100%; justify-content: center;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-weight: bold; font-size: 16px; color: #2c5aa0; margin-bottom: 8px;">
+                            ${track.name}
+                        </div>
+                        <div style="color: #666; font-size: 14px; margin-bottom: 8px;">
+                            📍 ${track.location}${track.country ? ', ' + track.country : ''}
+                        </div>
+                        ${track.description ? `<div style="color: #666; font-size: 12px; margin-bottom: 8px;">${track.description}</div>` : ''}
+                        <div style="color: #666; font-size: 12px;">
+                            ${track.length_miles ? `Length: ${track.length_miles} mi` : ''}
+                            ${track.length_km ? ` (${track.length_km} km)` : ''}
+                            ${track.turns ? ` • ${track.turns} turns` : ''}
+                            ${track.direction ? ` • ${track.direction}` : ''}
+                        </div>
+                    </div>
+                    <div class="track-map-placeholder" style="flex: 1;">
+                        <p>No track map available</p>
+                    </div>
+                </div>
+            `;
         }
-
-        container.innerHTML = trackInfoHtml;
 
     } catch (error) {
         console.error('Error loading track map:', error);
