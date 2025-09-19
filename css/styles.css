@@ -91,7 +91,7 @@ body {
 }
 
 .track-map-section {
-    height: 295px; /* 15px taller */
+    height: 400px; /* Match the max height of motorcycle section */
     overflow: hidden;
 }
 

@@ -86,17 +86,17 @@ async function loadTrackMap(eventId) {
                     // Build the complete layout with image on top and info below
                     container.innerHTML = `
                         <div style="display: flex; flex-direction: column; height: 100%;">
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; min-height: 0;">
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; max-height: calc(100% - 80px);">
                                 <div style="text-align: center; cursor: pointer; max-height: 100%;" onclick="openTrackMapModal('${imageUrl}', '${track.name.replace(/'/g, '\\\'')}')" title="Click to view full-size track map">
                                     <img src="${imageUrl}"
                                          alt="Track map for ${track.name}"
-                                         style="max-width: 100%; max-height: 200px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                                         style="max-width: 100%; max-height: 250px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
                                     <div style="color: #666; font-size: 10px; margin-top: 2px;">
                                         🔍 Click to view full-size
                                     </div>
                                 </div>
                             </div>
-                            <div style="border-top: 1px solid #eee; padding-top: 8px; flex-shrink: 0;">
+                            <div style="border-top: 1px solid #eee; padding-top: 8px; flex-shrink: 0; min-height: 70px;">
                                 <div style="font-weight: bold; font-size: 13px; color: #2c5aa0; margin-bottom: 2px;">
                                     ${track.name}
                                 </div>
