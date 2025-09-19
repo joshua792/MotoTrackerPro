@@ -77,7 +77,8 @@ export default async function handler(req, res) {
     
     const sessionData = req.body;
     const eventId = sessionData.event?.id || sessionData.event;
-    const sessionId = `${eventId}_${sessionData.motorcycle.id}_${sessionData.session}`;
+    const motorcycleId = sessionData.motorcycle?.id || sessionData.motorcycle;
+    const sessionId = `${eventId}_${motorcycleId}_${sessionData.session}`;
 
     // Helper function to truncate strings to avoid database constraint errors
     const truncateString = (str, maxLength) => {
@@ -93,7 +94,7 @@ export default async function handler(req, res) {
 
     // Log ALL the exact values being sent to database
     const dbValues = [
-      truncateString(sessionId, 255), eventId, sessionData.motorcycle.id, truncateString(sessionData.session, 100),
+      truncateString(sessionId, 255), eventId, motorcycleId, truncateString(sessionData.session, 100),
       truncateString(sessionData.frontSpring, 100), truncateString(sessionData.frontPreload, 100), truncateString(sessionData.frontCompression, 100), truncateString(sessionData.frontRebound, 100),
       truncateString(sessionData.rearSpring, 100), truncateString(sessionData.rearPreload, 100), truncateString(sessionData.rearCompression, 100), truncateString(sessionData.rearRebound, 100),
       truncateString(sessionData.frontSprocket, 100), truncateString(sessionData.rearSprocket, 100), truncateString(sessionData.swingarmLength, 100),
