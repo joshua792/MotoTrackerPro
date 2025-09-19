@@ -78,7 +78,7 @@ function loadAppState() {
 }
 
 // Settings management
-function loadSettings() {
+async function loadSettings() {
     const savedSettings = JSON.parse(localStorage.getItem('raceTrackerSettings') || '{}');
     settings = { ...settings, ...savedSettings };
 
@@ -391,7 +391,7 @@ async function exportData() {
 
 // Initialize app when page loads
 async function initApp() {
-    loadSettings();
+    await loadSettings();
 
     // Authentication check is handled by auth.js initAuth()
     // Data loading will happen after successful authentication

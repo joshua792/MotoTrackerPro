@@ -87,10 +87,14 @@ async function login() {
             updateAuthUI();
             closeAuthModal();
 
-            // Small delay to ensure token is set
+            // Small delay to ensure token is set and app.js is loaded
             setTimeout(async () => {
                 try {
-                    await loadAppData();
+                    if (typeof loadAppData === 'function') {
+                        await loadAppData();
+                    } else {
+                        console.error('loadAppData function not available yet');
+                    }
                 } catch (error) {
                     console.error('Error loading app data:', error);
                     alert('There was an issue loading data. Please refresh the page.');
@@ -223,7 +227,11 @@ async function verifyTokenAndLoadData() {
 
         if (response.success) {
             // Token is valid, load app data
-            await loadAppData();
+            if (typeof loadAppData === 'function') {
+                await loadAppData();
+            } else {
+                console.error('loadAppData function not available yet');
+            }
         } else {
             // Token is invalid, logout
             logout();

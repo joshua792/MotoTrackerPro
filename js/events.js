@@ -290,8 +290,8 @@ function displayEventsList() {
 
 
 // Settings modal functions
-function showSettingsModal() {
-    loadSettings();
+async function showSettingsModal() {
+    await loadSettings();
     document.getElementById('settings-modal').style.display = 'block';
     showSettingsTab('units');
 }
