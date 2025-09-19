@@ -521,6 +521,8 @@ function showSettingsTab(tabName) {
     
     if (tabName === 'events') {
         displayEventsList();
+        // Pre-load tracks for when user opens add event modal
+        loadTracksIntoEventForm();
     } else if (tabName === 'motorcycles') {
         displayMotorcyclesList();
     }
@@ -600,7 +602,10 @@ async function showAddEventModal() {
     document.getElementById('event-modal-title').textContent = 'Add New Event';
     document.getElementById('save-event-btn').textContent = 'Add Event';
     clearEventForm();
+
+    // Always load tracks when opening the modal
     await loadTracksIntoEventForm();
+
     document.getElementById('add-event-modal').style.display = 'block';
 }
 
@@ -614,13 +619,21 @@ function closeAddEventModal() {
 // Load tracks into event form
 async function loadTracksIntoEventForm() {
     try {
+        console.log('Loading tracks into event form...'); // Debug log
         const response = await apiCall('get-tracks');
+        console.log('Tracks response:', response); // Debug log
+
         const trackSelect = document.getElementById('event-track');
+        if (!trackSelect) {
+            console.error('Track select element not found');
+            return;
+        }
 
         // Clear existing options except the first one
         trackSelect.innerHTML = '<option value="">Select Track...</option>';
 
-        if (response.success && response.tracks.length > 0) {
+        if (response.success && response.tracks && response.tracks.length > 0) {
+            console.log(`Loading ${response.tracks.length} tracks`); // Debug log
             response.tracks.forEach(track => {
                 const option = document.createElement('option');
                 option.value = track.id;
@@ -628,6 +641,7 @@ async function loadTracksIntoEventForm() {
                 trackSelect.appendChild(option);
             });
         } else {
+            console.log('No tracks found in response'); // Debug log
             const option = document.createElement('option');
             option.value = '';
             option.textContent = 'No tracks available - Contact admin';
@@ -637,7 +651,9 @@ async function loadTracksIntoEventForm() {
     } catch (error) {
         console.error('Error loading tracks for event form:', error);
         const trackSelect = document.getElementById('event-track');
-        trackSelect.innerHTML = '<option value="">Error loading tracks</option>';
+        if (trackSelect) {
+            trackSelect.innerHTML = '<option value="">Error loading tracks</option>';
+        }
     }
 }
 

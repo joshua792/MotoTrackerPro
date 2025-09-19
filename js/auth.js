@@ -91,10 +91,9 @@ async function login() {
             setTimeout(async () => {
                 try {
                     await loadAppData();
-                    alert('Login successful!');
                 } catch (error) {
                     console.error('Error loading app data:', error);
-                    alert('Login successful, but there was an issue loading data. Please refresh the page.');
+                    alert('There was an issue loading data. Please refresh the page.');
                 }
             }, 100);
         }
