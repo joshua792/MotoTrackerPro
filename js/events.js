@@ -132,7 +132,7 @@ function displayExistingEvents(seriesEvents, seriesName) {
 
                 return `
                     <div class="existing-event-card ${hasUserSessions ? 'event-status-joined' : (isUpcoming ? 'event-status-upcoming' : 'event-status-past')}"
-                         onclick="selectExistingEvent('${event.id}')">`
+                         onclick="selectExistingEvent('${event.id}')">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div style="flex: 1;">
                                 <div style="font-weight: 600; color: #333; margin-bottom: 3px;">
