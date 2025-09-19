@@ -1,8 +1,7 @@
-require('dotenv').config();
-const { Pool } = require('pg');
-const jwt = require('jsonwebtoken');
+import { Pool } from 'pg';
+import jwt from 'jsonwebtoken';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
