@@ -265,17 +265,27 @@ function updateUnitLabels() {
 
 // Check if main content should be shown and load track map
 async function checkShowMainContent() {
-    currentEvent = document.getElementById('event-select').value;
-    
+    console.log('🔍 START: checkShowMainContent called');
+    const selectedEventId = document.getElementById('event-select').value;
+    console.log('📝 Selected event ID from dropdown:', selectedEventId);
+
+    // Find the full event object from the events array
+    currentEvent = selectedEventId ? events.find(e => e.id === selectedEventId) : null;
+    console.log('📝 Current event object:', currentEvent ? `${currentEvent.name} (ID: ${currentEvent.id})` : 'null');
+
     // Save state whenever event changes
     saveAppState();
-    
+
     // Load track map when event is selected
     if (currentEvent?.id) {
+        console.log('🏁 Calling loadTrackMap with event ID:', currentEvent.id);
         loadTrackMap(currentEvent.id);
+    } else {
+        console.log('⚠️ No current event or event ID, skipping track map load');
     }
-    
+
     if (currentMotorcycle && currentEvent) {
+        console.log('✅ Both motorcycle and event selected, showing main content');
         document.getElementById('main-content').style.display = 'block';
         await loadSessionData();
         // Load previous track data for Practice 1 if available
@@ -283,8 +293,10 @@ async function checkShowMainContent() {
             await loadPreviousTrackData();
         }
     } else {
+        console.log('⚠️ Missing motorcycle or event, hiding main content. Motorcycle:', !!currentMotorcycle, 'Event:', !!currentEvent);
         document.getElementById('main-content').style.display = 'none';
     }
+    console.log('🎉 checkShowMainContent completed');
 }
 
 // Switch between sessions
