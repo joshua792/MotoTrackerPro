@@ -168,6 +168,7 @@ function updateAuthUI() {
     if (currentUser) {
         document.getElementById('login-header').style.display = 'none';
         document.getElementById('auth-header').style.display = 'block';
+        document.getElementById('auth-buttons').style.display = 'block';
         document.getElementById('user-welcome').textContent = `Welcome, ${currentUser.name}`;
         document.getElementById('app-content').style.display = 'block';
         document.getElementById('welcome-message').style.display = 'none';
@@ -179,6 +180,7 @@ function updateAuthUI() {
     } else {
         document.getElementById('login-header').style.display = 'block';
         document.getElementById('auth-header').style.display = 'none';
+        document.getElementById('auth-buttons').style.display = 'none';
         document.getElementById('app-content').style.display = 'none';
         document.getElementById('welcome-message').style.display = 'block';
     }
