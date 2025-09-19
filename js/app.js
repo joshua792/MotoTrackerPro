@@ -366,7 +366,8 @@ async function loadAppData() {
         await Promise.all([
             loadEvents(),
             loadTires(),
-            loadMotorcycles()
+            loadMotorcycles(),
+            loadTracksList()
         ]);
 
         // Restore app state after loading data

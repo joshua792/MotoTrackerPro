@@ -92,7 +92,10 @@ function updateEventDropdown(filterSeries = null) {
             year: 'numeric'
         });
 
-        option.textContent = `${event.series || 'Unknown'} - ${event.name} - ${dateStr} - ${event.location}`;
+        // Use track location if available, otherwise fall back to event location
+        const track = event.track_id ? tracks.find(t => t.id === event.track_id) : null;
+        const location = track ? track.location : event.location;
+        option.textContent = `${event.series || 'Unknown'} - ${event.name} - ${dateStr} - ${location}`;
         select.appendChild(option);
     });
 
@@ -261,7 +264,10 @@ function displayEventsList() {
             <div onclick="editEvent('${event.id}')" style="flex: 1; cursor: pointer;">
                 <strong>${event.name}</strong><br>
                 <span style="color: #2c5aa0; font-weight: 600;">${event.series || 'No Series'}</span><br>
-                <span style="color: #666;">${event.track} - ${event.location}</span><br>
+                <span style="color: #666;">${event.track} - ${(() => {
+                    const track = event.track_id ? tracks.find(t => t.id === event.track_id) : null;
+                    return track ? track.location : event.location;
+                })()}</span><br>
                 <span style="font-size: 12px; color: #888;">${new Date(event.date).toLocaleDateString()}</span>
             </div>
             <button onclick="deleteEvent('${event.id}')" 
@@ -325,7 +331,10 @@ function displayEventsList() {
             <div onclick="editEvent('${event.id}')" style="flex: 1; cursor: pointer;">
                 <strong>${event.name}</strong><br>
                 <span style="color: #666; font-weight: 500;">${event.series || 'No Series'}</span><br>
-                <span style="color: #666;">${event.track} - ${event.location}</span><br>
+                <span style="color: #666;">${event.track} - ${(() => {
+                    const track = event.track_id ? tracks.find(t => t.id === event.track_id) : null;
+                    return track ? track.location : event.location;
+                })()}</span><br>
                 <span style="font-size: 12px; color: #888;">${new Date(event.date).toLocaleDateString()}</span>
             </div>
             <button onclick="deleteEvent('${event.id}')"

@@ -21,7 +21,10 @@ async function captureWeather() {
         // Get user's temperature preference
         const temperatureUnit = settings.temperatureUnit || 'fahrenheit';
         
-        const response = await apiCall(`get-weather?location=${encodeURIComponent(event.location)}&units=${temperatureUnit}`);
+        // Use track location if available, otherwise fall back to event location
+        const track = event.track_id ? tracks.find(t => t.id === event.track_id) : null;
+        const location = track ? track.location : event.location;
+        const response = await apiCall(`get-weather?location=${encodeURIComponent(location)}&units=${temperatureUnit}`);
         
         if (response.success) {
             currentWeatherData = response.weather;
