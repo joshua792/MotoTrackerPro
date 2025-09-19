@@ -15,7 +15,13 @@ module.exports = async function handler(req, res) {
     }
 
     const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
+    } catch (jwtError) {
+      console.error('JWT verification failed:', jwtError.message);
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
 
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
