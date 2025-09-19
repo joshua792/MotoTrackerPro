@@ -115,15 +115,50 @@ function loadSettings() {
             document.getElementById('user-team').value = settings.userTeam;
         }
 
-        // Load user race series
-        const seriesSelect = document.getElementById('user-race-series');
-        const userSeries = settings.userRaceSeries || [];
-        Array.from(seriesSelect.options).forEach(option => {
-            option.selected = userSeries.includes(option.value);
-        });
+        // Load race series from database and set user selections
+        await loadUserRaceSeriesOptions();
 
         // Update event series dropdown
         updateEventSeriesDropdown();
+    }
+}
+
+// Load race series options for account settings
+async function loadUserRaceSeriesOptions() {
+    const seriesSelect = document.getElementById('user-race-series');
+    if (!seriesSelect) return;
+
+    try {
+        // Clear existing options
+        seriesSelect.innerHTML = '<option value="">Loading race series...</option>';
+
+        // Load race series from API
+        const response = await apiCall('get-race-series');
+
+        if (response.success && response.series) {
+            // Clear loading message
+            seriesSelect.innerHTML = '';
+
+            // Add race series options
+            response.series.forEach(series => {
+                const option = document.createElement('option');
+                option.value = series.name;
+                option.textContent = series.name;
+                seriesSelect.appendChild(option);
+            });
+
+            // Set user's previously selected series
+            const userSeries = settings.userRaceSeries || [];
+            Array.from(seriesSelect.options).forEach(option => {
+                option.selected = userSeries.includes(option.value);
+            });
+        } else {
+            seriesSelect.innerHTML = '<option value="">Failed to load race series</option>';
+            console.error('Failed to load race series:', response.error);
+        }
+    } catch (error) {
+        console.error('Error loading race series options:', error);
+        seriesSelect.innerHTML = '<option value="">Error loading race series</option>';
     }
 }
 
