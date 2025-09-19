@@ -24,9 +24,9 @@ async function loadEvents() {
 function updateSeriesDropdown() {
     const select = document.getElementById('series-select');
     const currentSeries = select.value; // Preserve selection
-    
-    select.innerHTML = '<option value="">All Series</option>';
-    
+
+    select.innerHTML = '<option value="">Select Series...</option>';
+
     // Use centralized race series data if available, otherwise fall back to existing data
     let availableSeries = [];
     if (window.raceSeriesData && window.raceSeriesData.length > 0) {
@@ -43,27 +43,179 @@ function updateSeriesDropdown() {
     }
 
     const allSeries = [...new Set([...raceSeries, ...availableSeries])].sort();
-    
+
     allSeries.forEach(series => {
         const option = document.createElement('option');
         option.value = series;
         option.textContent = series;
         select.appendChild(option);
     });
-    
+
     // Restore previous selection if it exists
     if (currentSeries && allSeries.includes(currentSeries)) {
         select.value = currentSeries;
+        // Show existing events for the restored selection
+        showExistingEventsInSeries(currentSeries);
+    } else {
+        // Clear existing events display when no series is selected
+        hideExistingEventsDisplay();
     }
-    
-    // Add event listener for series filtering
+
+    // Add event listener for series filtering (remove existing first)
+    select.removeEventListener('change', filterEventsBySeries);
     select.addEventListener('change', filterEventsBySeries);
 }
 
-// Filter events by selected series
-function filterEventsBySeries() {
+// Filter events by selected series and show existing events
+async function filterEventsBySeries() {
     const selectedSeries = document.getElementById('series-select').value;
+
+    if (selectedSeries) {
+        // Show existing events in this series
+        await showExistingEventsInSeries(selectedSeries);
+    } else {
+        // Clear existing events display
+        hideExistingEventsDisplay();
+    }
+
     updateEventDropdown(selectedSeries);
+}
+
+// Show existing events in selected series
+async function showExistingEventsInSeries(series) {
+    try {
+        const response = await apiCall(`get-events-by-series?series=${encodeURIComponent(series)}`);
+
+        if (response.success && response.events.length > 0) {
+            displayExistingEvents(response.events, series);
+        } else {
+            hideExistingEventsDisplay();
+        }
+    } catch (error) {
+        console.error('Error fetching events for series:', error);
+        hideExistingEventsDisplay();
+    }
+}
+
+// Display existing events for the selected series
+function displayExistingEvents(seriesEvents, seriesName) {
+    // Create or get the existing events container
+    let container = document.getElementById('existing-events-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'existing-events-container';
+        container.style.cssText = `
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        `;
+
+        // Insert after the series select
+        const seriesSelect = document.getElementById('series-select').parentElement;
+        seriesSelect.parentElement.insertBefore(container, seriesSelect.nextSibling);
+    }
+
+    container.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <h4 style="margin: 0 0 5px 0; color: #2c5aa0;">Existing ${seriesName} Events</h4>
+            <p style="margin: 0; font-size: 14px; color: #666;">Join an existing event or create a new one</p>
+        </div>
+        <div style="display: grid; gap: 8px;">
+            ${seriesEvents.map(event => {
+                const eventDate = new Date(event.date);
+                const isUpcoming = eventDate >= new Date();
+                const hasUserSessions = event.user_has_sessions;
+
+                return `
+                    <div class="existing-event-card ${hasUserSessions ? 'event-status-joined' : (isUpcoming ? 'event-status-upcoming' : 'event-status-past')}"
+                         onclick="selectExistingEvent('${event.id}')">`
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #333; margin-bottom: 3px;">
+                                    ${event.name}
+                                </div>
+                                <div style="font-size: 13px; color: #666; margin-bottom: 2px;">
+                                    📍 ${event.track_name || event.track} - ${event.track_location || event.location}
+                                </div>
+                                <div style="font-size: 13px; color: #666;">
+                                    📅 ${eventDate.toLocaleDateString('en-US', {
+                                        weekday: 'short',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                    })}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                ${hasUserSessions ?
+                                    `<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">
+                                        JOINED (${event.session_count} sessions)
+                                    </span>` :
+                                    (isUpcoming ?
+                                        `<span style="background: #2196f3; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">
+                                            UPCOMING
+                                        </span>` :
+                                        `<span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">
+                                            PAST
+                                        </span>`
+                                    )
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef; text-align: center;">
+            <button onclick="hideExistingEventsDisplay(); showCreateNewEventOption('${seriesName}')"
+                    style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                + Create New ${seriesName} Event
+            </button>
+        </div>
+    `;
+
+    container.style.display = 'block';
+}
+
+// Hide existing events display
+function hideExistingEventsDisplay() {
+    const container = document.getElementById('existing-events-container');
+    if (container) {
+        container.style.display = 'none';
+    }
+}
+
+// Select an existing event
+function selectExistingEvent(eventId) {
+    const eventSelect = document.getElementById('event-select');
+    eventSelect.value = eventId;
+
+    // Trigger the event selection
+    if (typeof checkShowMainContent === 'function') {
+        checkShowMainContent();
+    }
+
+    // Hide the existing events display since user made a selection
+    hideExistingEventsDisplay();
+}
+
+// Show option to create new event for selected series
+function showCreateNewEventOption(seriesName) {
+    // Pre-fill the series in the add event modal
+    if (typeof showAddEventModal === 'function') {
+        showAddEventModal();
+        // Pre-select the series
+        setTimeout(() => {
+            const seriesSelect = document.getElementById('event-series');
+            if (seriesSelect) {
+                seriesSelect.value = seriesName;
+            }
+        }, 100);
+    }
 }
 
 // Update event dropdown with filtering by user's race series

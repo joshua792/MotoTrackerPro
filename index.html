@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-    MotoSetup Pro v1.1
+    MotoSetup Pro v1.2-dev
     Professional Motorcycle Race Setup Tracking
 
     Features:
@@ -8,14 +8,17 @@
     - Team management with invitations
     - User subscriptions and access control
     - Weather integration
-    - Event and track management
+    - Event and track management with duplicate prevention
     - Professional email notifications
+
+    v1.2 Features:
+    - Show existing events when series is selected to prevent duplicates
 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotoSetup Pro v1.1</title>
+    <title>MotoSetup Pro v1.2-dev</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -26,7 +29,7 @@
                 <span id="user-welcome" style="color: #ffffff; font-size: 18px; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);"></span>
             </div>
 
-            <h1>MotoSetup Pro v1.1</h1>
+            <h1>MotoSetup Pro v1.2-dev</h1>
             <p>Professional motorcycle race setup tracking for riders and teams</p>
             <div style="position: absolute; top: 20px; right: 30px;">
                 <div id="auth-buttons" style="display: none;">
@@ -91,6 +94,9 @@
                         <select id="series-select">
                             <option value="">Select Series...</option>
                         </select>
+                        <small style="color: #666; font-size: 12px; margin-top: 4px; display: block;">
+                            Select a series to see existing events you can join
+                        </small>
                     </div>
                     <div class="form-group">
                         <label for="event-select">Select Event</label>

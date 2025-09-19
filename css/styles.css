@@ -90,6 +90,52 @@ body {
     border: 1px solid rgba(33, 150, 243, 0.2);
 }
 
+/* Existing Events Display */
+#existing-events-container {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#existing-events-container h4 {
+    margin: 0 0 5px 0;
+    color: #2c5aa0;
+    font-size: 16px;
+}
+
+#existing-events-container .existing-event-card {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 8px;
+}
+
+#existing-events-container .existing-event-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+#existing-events-container .event-status-joined {
+    border: 1px solid #28a745;
+    border-left: 4px solid #28a745;
+}
+
+#existing-events-container .event-status-upcoming {
+    border: 1px solid #2196f3;
+    border-left: 4px solid #2196f3;
+}
+
+#existing-events-container .event-status-past {
+    border: 1px solid #ddd;
+    border-left: 4px solid #ddd;
+}
+
 /* Top Controls - New Layout */
 .top-controls {
     background: #f8f9fa;
@@ -116,7 +162,7 @@ body {
 }
 
 .event-section {
-    height: 240px; /* Static height, 40px shorter */
+    min-height: 240px; /* Minimum height, can expand for existing events */
     overflow-y: auto;
 }
 
