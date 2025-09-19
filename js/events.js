@@ -90,18 +90,78 @@ async function showExistingEventsInSeries(series) {
 
         if (response.success && response.events.length > 0) {
             console.log('Found', response.events.length, 'existing events');
-            displayExistingEvents(response.events, series);
+            displayEventsInContainer(response.events, series);
         } else {
             console.log('No existing events found for series:', series);
-            hideExistingEventsDisplay();
+            showCreateNewEventOption(series);
         }
     } catch (error) {
         console.error('Error fetching events for series:', error);
-        hideExistingEventsDisplay();
+        showCreateNewEventOption(series);
     }
 }
 
-// Display existing events for the selected series
+// Display events in the main events container
+function displayEventsInContainer(seriesEvents, seriesName) {
+    const container = document.getElementById('events-container');
+
+    container.innerHTML = `
+        <div style="display: grid; gap: 8px;">
+            ${seriesEvents.map(event => {
+                const eventDate = new Date(event.date);
+                const isUpcoming = eventDate >= new Date();
+                const hasUserSessions = event.user_owns_event;
+
+                return `
+                    <div class="event-card ${hasUserSessions ? 'event-status-joined' : (isUpcoming ? 'event-status-upcoming' : 'event-status-past')}"
+                         onclick="selectEvent('${event.id}')" style="cursor: pointer; transition: all 0.2s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #333; margin-bottom: 3px;">
+                                    ${event.name}
+                                </div>
+                                <div style="font-size: 13px; color: #666; margin-bottom: 2px;">
+                                    📍 ${event.track_name || event.track} - ${event.track_location || event.location}
+                                </div>
+                                <div style="font-size: 13px; color: #666;">
+                                    📅 ${eventDate.toLocaleDateString('en-US', {
+                                        weekday: 'short',
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                    })}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                ${hasUserSessions ?
+                                    `<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">
+                                        JOINED (${event.session_count} sessions)
+                                    </span>` :
+                                    (isUpcoming ?
+                                        `<span style="background: #2196f3; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">
+                                            AVAILABLE
+                                        </span>` :
+                                        `<span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">
+                                            PAST
+                                        </span>`
+                                    )
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef; text-align: center;">
+            <button onclick="showCreateNewEventModal('${seriesName}')"
+                    style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                + Create New ${seriesName} Event
+            </button>
+        </div>
+    `;
+}
+
+// Legacy function for compatibility - now calls the new function
 function displayExistingEvents(seriesEvents, seriesName) {
     // Create or get the existing events container
     let container = document.getElementById('existing-events-container');
@@ -193,8 +253,8 @@ function hideExistingEventsDisplay() {
     }
 }
 
-// Select an existing event
-function selectExistingEvent(eventId) {
+// Select an event from the card interface
+function selectEvent(eventId) {
     const eventSelect = document.getElementById('event-select');
     eventSelect.value = eventId;
 
@@ -203,12 +263,42 @@ function selectExistingEvent(eventId) {
         checkShowMainContent();
     }
 
-    // Hide the existing events display since user made a selection
-    hideExistingEventsDisplay();
+    // Visual feedback - highlight selected event
+    document.querySelectorAll('.event-card').forEach(card => {
+        card.style.borderLeft = '';
+        card.style.backgroundColor = '';
+    });
+
+    const selectedCard = document.querySelector(`[onclick="selectEvent('${eventId}')"]`);
+    if (selectedCard) {
+        selectedCard.style.borderLeft = '4px solid #2c5aa0';
+        selectedCard.style.backgroundColor = '#f8f9fa';
+    }
+}
+
+// Legacy function for compatibility
+function selectExistingEvent(eventId) {
+    selectEvent(eventId);
 }
 
 // Show option to create new event for selected series
 function showCreateNewEventOption(seriesName) {
+    const container = document.getElementById('events-container');
+
+    container.innerHTML = `
+        <div style="text-align: center; padding: 20px; border: 2px dashed #ddd; border-radius: 8px; background: #f9f9f9;">
+            <h3 style="margin: 0 0 8px 0; color: #666;">No events found for ${seriesName}</h3>
+            <p style="margin: 0 0 16px 0; color: #888; font-size: 14px;">Be the first to create an event in this series!</p>
+            <button onclick="showCreateNewEventModal('${seriesName}')"
+                    style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                + Create New ${seriesName} Event
+            </button>
+        </div>
+    `;
+}
+
+// Show create new event modal
+function showCreateNewEventModal(seriesName) {
     // Pre-fill the series in the add event modal
     if (typeof showAddEventModal === 'function') {
         showAddEventModal();

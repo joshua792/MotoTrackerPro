@@ -99,8 +99,15 @@
                         </small>
                     </div>
                     <div class="form-group">
-                        <label for="event-select">Select Event</label>
-                        <select id="event-select">
+                        <label for="events-container">Select Event</label>
+                        <div id="events-container">
+                            <div class="empty-state">
+                                <h3>Select a race series above</h3>
+                                <p>Choose a series to see available events</p>
+                            </div>
+                        </div>
+                        <!-- Hidden select for compatibility -->
+                        <select id="event-select" style="display: none;">
                             <option value="">Loading events...</option>
                         </select>
                     </div>
