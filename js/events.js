@@ -5,16 +5,26 @@ let raceSeries = [];
 
 // Load events from database and populate series dropdown
 async function loadEvents() {
+    console.log('📅 START: loadEvents called');
     try {
+        console.log('🌐 STEP 1: Making API call to get-events');
         const response = await apiCall('get-events');
+        console.log('📝 STEP 1 RESULT: API response received, success:', response.success, 'events count:', response.events?.length || 0);
+
         events = response.events || [];
-        
+        console.log('✅ STEP 2: Events array set, events.length:', events.length);
+
         // Extract unique race series from events
+        console.log('🔧 STEP 3: Extracting unique race series');
         raceSeries = [...new Set(events.map(e => e.series).filter(Boolean))];
+        console.log('📝 STEP 3 RESULT: Found race series:', raceSeries);
+
+        console.log('🔧 STEP 4: Updating dropdowns');
         updateSeriesDropdown();
         updateEventDropdown();
+        console.log('🎉 SUCCESS: loadEvents completed successfully');
     } catch (error) {
-        console.error('Error loading events:', error);
+        console.error('💥 FATAL ERROR: Error loading events:', error);
         events = [];
         raceSeries = [];
     }
@@ -59,28 +69,40 @@ function filterEventsBySeries() {
 
 // Update event dropdown with filtering by user's race series
 function updateEventDropdown(filterSeries = null) {
+    console.log('📋 START: updateEventDropdown called, filterSeries:', filterSeries);
     const select = document.getElementById('event-select');
     const currentEvent = select.value; // Preserve selection
+    console.log('📝 Current selected event:', currentEvent);
 
     select.innerHTML = '<option value="">Select an event...</option>';
 
     // Get user's selected race series from settings
     const userSeries = settings.userRaceSeries || [];
+    console.log('👤 User race series from settings:', userSeries);
 
     // Filter events by user's series (unless specific filterSeries is provided)
+    console.log('🔍 STEP 1: Filtering events, total events:', events.length);
     let filteredEvents = events;
     if (filterSeries) {
         // Use specific series filter (for backwards compatibility)
+        console.log('🔧 Using specific series filter:', filterSeries);
         filteredEvents = events.filter(e => e.series === filterSeries);
     } else if (userSeries.length > 0) {
         // Filter by user's selected series
+        console.log('🔧 Using user series filter:', userSeries);
         filteredEvents = events.filter(e => userSeries.includes(e.series));
+    } else {
+        console.log('🔧 No series filter applied, showing all events');
     }
+    console.log('📝 STEP 1 RESULT: Filtered events count:', filteredEvents.length);
 
     // Sort events by date (most recent first)
+    console.log('🔧 STEP 2: Sorting events by date');
     filteredEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    filteredEvents.forEach(event => {
+    console.log('🔧 STEP 3: Creating dropdown options for', filteredEvents.length, 'events');
+    filteredEvents.forEach((event, index) => {
+        console.log(`📝 Processing event ${index + 1}:`, event.name, 'ID:', event.id, 'track_id:', event.track_id);
         const option = document.createElement('option');
         option.value = event.id;
 
@@ -95,18 +117,21 @@ function updateEventDropdown(filterSeries = null) {
         // Use track location if available, otherwise fall back to event location
         const track = event.track_id ? tracks.find(t => t.id === event.track_id) : null;
         const location = track ? track.location : event.location;
+        console.log(`🌍 Event ${event.name} location: ${location} (from ${track ? 'track' : 'event'} data)`);
         option.textContent = `${event.series || 'Unknown'} - ${event.name} - ${dateStr} - ${location}`;
         select.appendChild(option);
     });
 
     // Show message if no events match user's series
     if (filteredEvents.length === 0 && userSeries.length > 0) {
+        console.log('⚠️ No events found for user race series, showing message');
         const option = document.createElement('option');
         option.value = '';
         option.textContent = 'No events found for your selected race series';
         option.disabled = true;
         select.appendChild(option);
     } else if (filteredEvents.length === 0 && userSeries.length === 0) {
+        console.log('⚠️ No events found and no user series configured, showing setup message');
         const option = document.createElement('option');
         option.value = '';
         option.textContent = 'Configure race series in Account Settings to see filtered events';
@@ -115,12 +140,18 @@ function updateEventDropdown(filterSeries = null) {
     }
 
     // Restore previous selection if it still exists after filtering
+    console.log('🔧 STEP 4: Restoring previous selection if it exists, currentEvent:', currentEvent);
     if (currentEvent) {
         const eventStillExists = filteredEvents.some(e => e.id === currentEvent);
+        console.log('📝 Previous event still exists after filtering:', eventStillExists);
         if (eventStillExists) {
             select.value = currentEvent;
+            console.log('✅ Previous selection restored:', currentEvent);
+        } else {
+            console.log('⚠️ Previous selection no longer available after filtering');
         }
     }
+    console.log('🎉 SUCCESS: updateEventDropdown completed, dropdown has', select.options.length, 'options');
 }
 
 // Clear event form
