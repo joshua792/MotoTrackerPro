@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
     const userQuery = `
       SELECT id, name, email, subscription_status, subscription_plan,
              trial_start_date, trial_end_date, subscription_start_date, subscription_end_date,
-             usage_count, usage_limit, stripe_customer_id, stripe_subscription_id
+             usage_count, usage_limit, stripe_customer_id, stripe_subscription_id, is_admin
       FROM users WHERE id = $1
     `;
 
@@ -46,7 +46,32 @@ module.exports = async function handler(req, res) {
     const user = userResult.rows[0];
     await pool.end();
 
-    // Calculate subscription status
+    // Admin users bypass all subscription restrictions
+    if (user.is_admin) {
+      return res.json({
+        success: true,
+        subscription: {
+          status: 'admin',
+          plan: 'unlimited',
+          isActive: true,
+          hasReachedLimit: false,
+          daysRemaining: 999,
+          usagePercentage: 0,
+          usageCount: user.usage_count || 0,
+          usageLimit: null,
+          trialEndDate: null,
+          subscriptionEndDate: null,
+          planDetails: {
+            name: 'Admin Access',
+            features: ['Unlimited access to all features', 'Admin privileges', 'No usage restrictions']
+          },
+          stripeCustomerId: null,
+          stripeSubscriptionId: null
+        }
+      });
+    }
+
+    // Calculate subscription status for non-admin users
     const isActive = isSubscriptionActive(user);
     const hasReachedLimit = hasReachedUsageLimit(user);
     const daysRemaining = getDaysRemaining(user);

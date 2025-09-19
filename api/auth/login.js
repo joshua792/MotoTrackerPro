@@ -39,6 +39,32 @@ module.exports = async function handler(req, res) {
       console.error('Error checking/adding is_admin column:', alterError);
     }
 
+    // Add subscription columns if they don't exist (for existing installations)
+    try {
+      const addColumns = [
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'trial'",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(50) DEFAULT 'basic'",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_start_date TIMESTAMP DEFAULT NOW()",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_end_date TIMESTAMP DEFAULT (NOW() + INTERVAL '14 days')",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start_date TIMESTAMP",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end_date TIMESTAMP",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS usage_count INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS usage_limit INTEGER DEFAULT 1000"
+      ];
+
+      for (const addColumn of addColumns) {
+        try {
+          await pool.query(addColumn);
+        } catch (columnError) {
+          // Column might already exist, which is fine
+        }
+      }
+    } catch (alterError) {
+      console.error('Error adding subscription columns:', alterError);
+    }
+
     // Find user by email
     const userQuery = 'SELECT * FROM users WHERE email = $1';
     const userResult = await pool.query(userQuery, [email.toLowerCase()]);

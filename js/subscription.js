@@ -48,7 +48,10 @@ function updateHeaderSubscriptionStatus() {
     let statusText = '';
     let statusColor = '#666';
 
-    if (subscriptionData.status === 'trial') {
+    if (subscriptionData.status === 'admin') {
+        statusText = 'Admin Access';
+        statusColor = '#6f42c1'; // Purple for admin
+    } else if (subscriptionData.status === 'trial') {
         statusText = `Trial: ${subscriptionData.daysRemaining} days left`;
         statusColor = subscriptionData.daysRemaining <= 3 ? '#d63384' : '#ffc107';
     } else if (subscriptionData.status === 'active') {
@@ -78,7 +81,20 @@ function updateModalSubscriptionInfo() {
 
     let html = '';
 
-    if (subscriptionData.status === 'trial') {
+    if (subscriptionData.status === 'admin') {
+        html = `
+            <div style="background: #f3e5ff; border: 1px solid #d1a7ff; border-radius: 6px; padding: 15px; margin-bottom: 15px;">
+                <h4 style="color: #6f42c1; margin-bottom: 10px;">👨‍💼 Administrator Access</h4>
+                <p style="margin-bottom: 8px;"><strong>Status:</strong> Unlimited Access</p>
+                <p style="margin-bottom: 8px;"><strong>Features:</strong> All features unlocked</p>
+                <p style="margin-bottom: 8px;"><strong>Usage:</strong> No limits</p>
+                <p style="color: #6f42c1; font-weight: bold; margin-top: 10px;">✨ You have full administrative access to all features without restrictions.</p>
+            </div>
+        `;
+
+        // Hide upgrade options for admin users
+        document.getElementById('subscription-plans').style.display = 'none';
+    } else if (subscriptionData.status === 'trial') {
         html = `
             <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; margin-bottom: 15px;">
                 <h4 style="color: #2c5aa0; margin-bottom: 10px;">🎯 Trial Period</h4>
@@ -149,18 +165,29 @@ async function selectPlan(planType) {
 
 // Update auth UI to include subscription status
 function updateAuthUIWithSubscription() {
-    if (currentUser && currentUser.subscription_status) {
-        // This will be called after login to update the header
-        const fakeSubscriptionData = {
-            status: currentUser.subscription_status,
-            plan: currentUser.subscription_plan,
-            daysRemaining: calculateDaysRemaining(currentUser),
-            usageCount: currentUser.usage_count || 0,
-            usageLimit: currentUser.usage_limit || 1000,
-            usagePercentage: currentUser.usage_limit ? (currentUser.usage_count / currentUser.usage_limit) * 100 : 0
-        };
+    if (currentUser) {
+        // Handle admin users
+        if (currentUser.is_admin) {
+            subscriptionData = {
+                status: 'admin',
+                plan: 'unlimited',
+                daysRemaining: 999,
+                usageCount: currentUser.usage_count || 0,
+                usageLimit: null,
+                usagePercentage: 0
+            };
+        } else if (currentUser.subscription_status) {
+            // Regular users
+            subscriptionData = {
+                status: currentUser.subscription_status,
+                plan: currentUser.subscription_plan,
+                daysRemaining: calculateDaysRemaining(currentUser),
+                usageCount: currentUser.usage_count || 0,
+                usageLimit: currentUser.usage_limit || 1000,
+                usagePercentage: currentUser.usage_limit ? (currentUser.usage_count / currentUser.usage_limit) * 100 : 0
+            };
+        }
 
-        subscriptionData = fakeSubscriptionData;
         updateHeaderSubscriptionStatus();
     }
 }

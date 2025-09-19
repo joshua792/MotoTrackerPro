@@ -206,6 +206,11 @@ async function saveSession() {
 // Check usage and show upgrade prompts if needed
 async function checkUsageAndShowPrompts() {
     try {
+        // Skip prompts for admin users
+        if (currentUser && currentUser.is_admin) {
+            return;
+        }
+
         // Load current subscription status
         if (typeof loadSubscriptionStatus === 'function') {
             await loadSubscriptionStatus();
@@ -213,6 +218,11 @@ async function checkUsageAndShowPrompts() {
 
         // If no subscription data available, skip prompts
         if (!subscriptionData) return;
+
+        // Skip prompts for admin users (double check)
+        if (subscriptionData.status === 'admin') {
+            return;
+        }
 
         // Show trial expiration warning
         if (subscriptionData.status === 'trial' && subscriptionData.daysRemaining <= 7) {
