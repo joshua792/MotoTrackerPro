@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
       ssl: { rejectUnauthorized: false }
     });
 
-    const { name, email, password, team } = req.body;
+    const { name, email, password, team, invitationToken } = req.body;
 
     if (!name || !email || !password) {
       await pool.end();
@@ -152,7 +152,80 @@ module.exports = async function handler(req, res) {
       console.error('Error sending verification email:', emailError);
     }
 
-    console.log('Registration successful for:', email, emailSent ? '(verification email sent)' : '(email failed)');
+    // Handle team invitation if provided
+    let teamJoined = false;
+    let teamName = null;
+
+    if (invitationToken) {
+      try {
+        // Validate and process team invitation
+        const invitationQuery = `
+          SELECT
+            ti.id,
+            ti.email,
+            ti.team_id,
+            ti.expires_at,
+            ti.status,
+            t.name as team_name
+          FROM team_invitations ti
+          JOIN teams t ON ti.team_id = t.id
+          WHERE ti.token = $1 AND ti.email = $2 AND ti.status = 'pending'
+        `;
+
+        const invitationResult = await pool.query(invitationQuery, [invitationToken, email.toLowerCase()]);
+
+        if (invitationResult.rows.length > 0) {
+          const invitation = invitationResult.rows[0];
+          const now = new Date();
+          const expiresAt = new Date(invitation.expires_at);
+
+          if (now <= expiresAt) {
+            // Create connection to handle team invitation
+            const teamPool = new Pool({
+              connectionString: process.env.DATABASE_URL,
+              ssl: { rejectUnauthorized: false }
+            });
+
+            await teamPool.query('BEGIN');
+
+            try {
+              // Add user to team
+              const addMemberQuery = `
+                INSERT INTO team_memberships (team_id, user_id, role, status, joined_at)
+                VALUES ($1, $2, 'member', 'active', NOW())
+              `;
+
+              await teamPool.query(addMemberQuery, [invitation.team_id, newUser.id]);
+
+              // Mark invitation as accepted
+              const updateInvitationQuery = `
+                UPDATE team_invitations
+                SET status = 'accepted', updated_at = NOW()
+                WHERE id = $1
+              `;
+
+              await teamPool.query(updateInvitationQuery, [invitation.id]);
+
+              await teamPool.query('COMMIT');
+              await teamPool.end();
+
+              teamJoined = true;
+              teamName = invitation.team_name;
+
+              console.log('User automatically joined team:', teamName);
+            } catch (teamError) {
+              await teamPool.query('ROLLBACK');
+              await teamPool.end();
+              console.error('Error processing team invitation during registration:', teamError);
+            }
+          }
+        }
+      } catch (inviteError) {
+        console.error('Error processing team invitation:', inviteError);
+      }
+    }
+
+    console.log('Registration successful for:', email, emailSent ? '(verification email sent)' : '(email failed)', teamJoined ? `(joined team: ${teamName})` : '');
 
     res.json({
       success: true,
@@ -173,7 +246,9 @@ module.exports = async function handler(req, res) {
       message: emailSent
         ? 'Registration successful! Please check your email to verify your account.'
         : 'Registration successful! Email verification will be sent shortly.',
-      emailSent: emailSent
+      emailSent: emailSent,
+      teamJoined: teamJoined,
+      teamName: teamName
     });
 
   } catch (error) {

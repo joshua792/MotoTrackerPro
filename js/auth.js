@@ -8,13 +8,21 @@ let authToken = null;
 window.addEventListener('DOMContentLoaded', initAuth);
 
 async function initAuth() {
-    // Check for email verification in URL parameters
+    // Check for URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const verifyToken = urlParams.get('verify');
+    const invitationToken = urlParams.get('invitation');
 
     if (verifyToken) {
         await handleEmailVerification(verifyToken);
         // Remove verify parameter from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+    }
+
+    if (invitationToken) {
+        await handleTeamInvitation(invitationToken);
+        // Remove invitation parameter from URL
         window.history.replaceState({}, document.title, window.location.pathname);
         return;
     }
@@ -62,6 +70,58 @@ async function handleEmailVerification(token) {
         } else {
             alert('Email verification failed: ' + error.message);
             showAuthModal('login');
+        }
+    }
+}
+
+// Handle team invitation from URL
+async function handleTeamInvitation(token) {
+    try {
+        const response = await apiCall('teams/validate-invitation', {
+            method: 'POST',
+            body: JSON.stringify({ token })
+        });
+
+        if (response.success) {
+            // Store invitation data for registration
+            localStorage.setItem('pendingInvitation', JSON.stringify({
+                token: token,
+                teamName: response.invitation.teamName,
+                inviterName: response.invitation.inviterName,
+                email: response.invitation.email,
+                expiresAt: response.invitation.expiresAt
+            }));
+
+            // Check if user is already logged in
+            if (currentUser) {
+                // User is logged in - ask if they want to accept the invitation
+                const accept = confirm(`You've been invited to join the team "${response.invitation.teamName}" by ${response.invitation.inviterName}. Would you like to accept this invitation?`);
+                if (accept) {
+                    await acceptTeamInvitation(token);
+                } else {
+                    localStorage.removeItem('pendingInvitation');
+                }
+            } else {
+                // User not logged in - show registration/login options
+                const hasAccount = confirm(`You've been invited to join the team "${response.invitation.teamName}" by ${response.invitation.inviterName}.\n\nDo you already have a MotoTracker Pro account?\n\nClick OK if you have an account (will show login)\nClick Cancel to create a new account`);
+
+                if (hasAccount) {
+                    showAuthModal('login');
+                } else {
+                    showAuthModal('register');
+                    // Pre-fill the email in registration form
+                    document.getElementById('register-email').value = response.invitation.email;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Team invitation error:', error);
+        if (error.message.includes('expired')) {
+            alert('This team invitation has expired. Please ask the team administrator to send a new invitation.');
+        } else if (error.message.includes('Invalid')) {
+            alert('Invalid invitation link. Please check that you have the correct link.');
+        } else {
+            alert('Failed to process team invitation: ' + error.message);
         }
     }
 }
@@ -129,6 +189,18 @@ async function login() {
             updateAuthUI();
             closeAuthModal();
 
+            // Check for pending team invitation after login
+            const pendingInvitation = localStorage.getItem('pendingInvitation');
+            if (pendingInvitation) {
+                const invitation = JSON.parse(pendingInvitation);
+                const accept = confirm(`You have a pending team invitation to join "${invitation.teamName}". Would you like to accept it now?`);
+                if (accept) {
+                    await acceptTeamInvitation(invitation.token);
+                } else {
+                    localStorage.removeItem('pendingInvitation');
+                }
+            }
+
             // Small delay to ensure token is set and app.js is loaded
             setTimeout(async () => {
                 try {
@@ -172,17 +244,46 @@ async function register() {
         return;
     }
 
+    // Check for pending team invitation
+    const pendingInvitation = localStorage.getItem('pendingInvitation');
+    let invitationToken = null;
+
+    if (pendingInvitation) {
+        const invitation = JSON.parse(pendingInvitation);
+        // Verify the email matches the invitation
+        if (invitation.email.toLowerCase() === email.toLowerCase()) {
+            invitationToken = invitation.token;
+        } else {
+            alert(`This invitation was sent to ${invitation.email}. Please use that email address to register.`);
+            document.getElementById('register-email').value = invitation.email;
+            return;
+        }
+    }
+
     try {
+        const requestBody = { name, email, password, team };
+        if (invitationToken) {
+            requestBody.invitationToken = invitationToken;
+        }
+
         const response = await apiCall('auth/register', {
             method: 'POST',
-            body: JSON.stringify({ name, email, password, team })
+            body: JSON.stringify(requestBody)
         });
 
         if (response.success) {
+            // Clear pending invitation
+            localStorage.removeItem('pendingInvitation');
+
+            let message = 'Registration successful! Please check your email to verify your account, then login.';
+            if (response.teamJoined) {
+                message += `\n\nYou've also been automatically added to the team "${response.teamName}".`;
+            }
+
             if (response.emailSent) {
-                alert('Registration successful! Please check your email to verify your account, then login.');
+                alert(message);
             } else {
-                alert('Registration successful! Email verification will be sent shortly. Please login and check your email.');
+                alert(message.replace('Please check your email', 'Email verification will be sent shortly. Please check your email'));
             }
             showAuthModal('login');
         }
@@ -332,6 +433,27 @@ function wrapApiCall() {
             throw error;
         }
     };
+}
+
+// Accept team invitation for logged-in users
+async function acceptTeamInvitation(invitationToken) {
+    try {
+        const response = await apiCall('teams/accept-invitation', {
+            method: 'POST',
+            body: JSON.stringify({ invitationToken })
+        });
+
+        if (response.success) {
+            alert(`Successfully joined team "${response.team.name}"!`);
+            localStorage.removeItem('pendingInvitation');
+
+            // Refresh the page to update team info
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Accept invitation error:', error);
+        alert('Failed to accept team invitation: ' + error.message);
+    }
 }
 
 // Password reset functionality
