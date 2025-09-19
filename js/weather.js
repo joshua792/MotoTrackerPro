@@ -13,10 +13,12 @@ async function captureWeather() {
 
     try {
         // Get location from current event
-        const event = events.find(e => e.id === currentEvent);
-        if (!event) {
-            throw new Error('Event not found');
+        if (!currentEvent) {
+            throw new Error('No event selected');
         }
+
+        // currentEvent is now the full event object, not just an ID
+        const event = currentEvent;
 
         // Get user's temperature preference
         const temperatureUnit = settings.temperatureUnit || 'fahrenheit';

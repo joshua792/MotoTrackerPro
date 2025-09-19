@@ -86,25 +86,25 @@ async function loadTrackMap(eventId) {
                     // Build the complete layout with image on top and info below
                     container.innerHTML = `
                         <div style="display: flex; flex-direction: column; height: 100%;">
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
-                                <div style="text-align: center; cursor: pointer;" onclick="openTrackMapModal('${imageUrl}', '${track.name.replace(/'/g, '\\\'')}')" title="Click to view full-size track map">
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; min-height: 0;">
+                                <div style="text-align: center; cursor: pointer; max-height: 100%;" onclick="openTrackMapModal('${imageUrl}', '${track.name.replace(/'/g, '\\\'')}')" title="Click to view full-size track map">
                                     <img src="${imageUrl}"
                                          alt="Track map for ${track.name}"
-                                         style="max-width: 100%; max-height: 100%; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
-                                    <div style="color: #666; font-size: 11px; margin-top: 3px;">
+                                         style="max-width: 100%; max-height: 200px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                                    <div style="color: #666; font-size: 10px; margin-top: 2px;">
                                         🔍 Click to view full-size
                                     </div>
                                 </div>
                             </div>
-                            <div style="border-top: 1px solid #eee; padding-top: 10px;">
-                                <div style="font-weight: bold; font-size: 14px; color: #2c5aa0; margin-bottom: 3px;">
+                            <div style="border-top: 1px solid #eee; padding-top: 8px; flex-shrink: 0;">
+                                <div style="font-weight: bold; font-size: 13px; color: #2c5aa0; margin-bottom: 2px;">
                                     ${track.name}
                                 </div>
-                                <div style="color: #666; font-size: 12px; margin-bottom: 3px;">
+                                <div style="color: #666; font-size: 11px; margin-bottom: 2px;">
                                     📍 ${track.location}${track.country ? ', ' + track.country : ''}
                                 </div>
-                                ${track.description ? `<div style="color: #666; font-size: 11px; margin-bottom: 3px;">${track.description}</div>` : ''}
-                                <div style="color: #666; font-size: 11px;">
+                                ${track.description ? `<div style="color: #666; font-size: 10px; margin-bottom: 2px; line-height: 1.2;">${track.description}</div>` : ''}
+                                <div style="color: #666; font-size: 10px; line-height: 1.2;">
                                     ${track.length_miles ? `${track.length_miles} mi` : ''}
                                     ${track.length_km ? ` (${track.length_km} km)` : ''}
                                     ${track.turns ? ` • ${track.turns} turns` : ''}
