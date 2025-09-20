@@ -151,6 +151,14 @@
                 <button class="session-tab" onclick="switchSession('race2')">Race 2</button>
             </div>
 
+            <!-- Sticky Action Bar -->
+            <div class="sticky-action-bar" style="position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #2c5aa0, #1e3a5f); padding: 10px 20px; margin: 0 -20px 20px -20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: center; gap: 15px; align-items: center;">
+                    <button class="btn btn-success" onclick="saveSession()" style="background: #28a745; border: none; color: white; padding: 8px 16px; border-radius: 4px; font-size: 14px;">💾 Save Session</button>
+                    <button class="btn btn-primary" onclick="copyFromPrevious()" title="Copy from previous session in this event, or from your most recent session if this is Practice 1" style="background: #007bff; border: none; color: white; padding: 8px 16px; border-radius: 4px; font-size: 14px;">📋 Copy from Previous</button>
+                </div>
+            </div>
+
             <div class="session-content">
                 <!-- Collapsible Setup Section -->
                 <button class="collapsible active" onclick="toggleCollapsible(this)">
@@ -345,11 +353,6 @@
                     </div>
                 </div>
 
-                <!-- Primary Action Buttons (After Setup) -->
-                <div class="primary-action-buttons" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
-                    <button class="btn btn-success" onclick="saveSession()" style="margin: 0 8px;">Save Session</button>
-                    <button class="btn btn-primary" onclick="copyFromPrevious()" title="Copy from previous session in this event, or from your most recent session if this is Practice 1" style="margin: 0 8px;">Copy from Previous</button>
-                </div>
 
                 <div class="feedback-section">
                     <h4>Post-Session Feedback</h4>
