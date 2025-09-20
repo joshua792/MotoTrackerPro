@@ -345,32 +345,45 @@
                     </div>
                 </div>
 
+                <!-- Primary Action Buttons (After Setup) -->
+                <div class="primary-action-buttons" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                    <button class="btn btn-success" onclick="saveSession()" style="margin: 0 8px;">Save Session</button>
+                    <button class="btn btn-primary" onclick="copyFromPrevious()" title="Copy from previous session in this event, or from your most recent session if this is Practice 1" style="margin: 0 8px;">Copy from Previous</button>
+                </div>
+
                 <div class="feedback-section">
                     <h4>Post-Session Feedback</h4>
                     <textarea id="feedback" placeholder="How did the bike feel? What needs to be changed for the next session?"></textarea>
+                    <!-- Save button after notes -->
+                    <div style="margin-top: 10px; text-align: right;">
+                        <button class="btn btn-success btn-small" onclick="saveSession()">Save Notes</button>
+                    </div>
                 </div>
 
                 <div class="feedback-section" style="background: #f3e5f5; border-color: #9c27b0;">
                     <h4 style="color: #7b1fa2;">RaceStudio3 Data</h4>
-                    <div class="form-group">
-                        <label for="rs3-file">Upload RaceStudio3 CSV Export</label>
-                        <input type="file" id="rs3-file" accept=".csv" onchange="handleFileUpload(event)">
+                    <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="rs3-file">Upload RaceStudio3 CSV Export</label>
+                            <input type="file" id="rs3-file" accept=".csv" onchange="handleFileUpload(event)">
+                        </div>
+                        <div>
+                            <button class="btn btn-primary" onclick="sendToAI()" style="white-space: nowrap;">AI Analysis</button>
+                        </div>
                     </div>
                     <div id="file-status" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
                     <div id="uploaded-files" style="margin-top: 10px;"></div>
                 </div>
 
-                <div class="action-buttons">
-                    <button class="btn btn-success" onclick="saveSession()">Save Session</button>
-                    <button class="btn btn-primary" onclick="copyFromPrevious()" title="Copy from previous session in this event, or from your most recent session if this is Practice 1">Copy from Previous</button>
-                    <button class="btn btn-secondary" onclick="clearSession()">Clear All</button>
-                    <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
-                    <button class="btn btn-primary" onclick="sendToAI()">AI Analysis</button>
+                <!-- Secondary Action Buttons (Bottom) -->
+                <div class="secondary-action-buttons" style="margin: 20px 0; text-align: center;">
+                    <button class="btn btn-secondary" onclick="clearSession()" style="margin: 0 8px;">Clear All</button>
+                    <button class="btn btn-secondary" onclick="exportData()" style="margin: 0 8px;">Export Data</button>
                 </div>
 
                 <div id="saved-data" class="data-display" style="display: none;">
                     <h4>Session Saved Successfully!</h4>
-                    <p>Data has been saved to browser storage and is ready for analysis.</p>
+                    <p>Your session data has been saved to the database and is available across all your devices.</p>
                 </div>
             </div>
         </div>
