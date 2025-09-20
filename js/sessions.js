@@ -266,50 +266,70 @@ async function checkUsageAndShowPrompts() {
 }
 
 // Copy from previous session
-function copyFromPrevious() {
+async function copyFromPrevious() {
     const sessions = ['practice1', 'qualifying1', 'qualifying2', 'race1', 'warmup', 'race2'];
     const currentIndex = sessions.indexOf(currentSession);
-    
+
     if (currentIndex > 0) {
+        // Try to copy from previous session in current event first
         const previousSession = sessions[currentIndex - 1];
         const previousKey = `${currentEvent}_${currentMotorcycle.id}_${previousSession}`;
         const previousData = sessionData[previousKey];
-        
+
         if (previousData) {
-            // Copy all setup data but not notes/feedback
-            document.getElementById('front-spring').value = previousData.frontSpring || '';
-            document.getElementById('front-preload').value = previousData.frontPreload || '';
-            document.getElementById('front-compression').value = previousData.frontCompression || '';
-            document.getElementById('front-rebound').value = previousData.frontRebound || '';
-            document.getElementById('rear-spring').value = previousData.rearSpring || '';
-            document.getElementById('rear-preload').value = previousData.rearPreload || '';
-            document.getElementById('rear-compression').value = previousData.rearCompression || '';
-            document.getElementById('rear-rebound').value = previousData.rearRebound || '';
-            
-            // Copy geometry data
-            document.getElementById('front-ride-height').value = previousData.frontRideHeight || '';
-            document.getElementById('rear-ride-height').value = previousData.rearRideHeight || '';
-            document.getElementById('front-sag').value = previousData.frontSag || '';
-            document.getElementById('rear-sag').value = previousData.rearSag || '';
-            document.getElementById('swingarm-angle').value = previousData.swingarmAngle || '';
-            
-            document.getElementById('front-sprocket').value = previousData.frontSprocket || '';
-            document.getElementById('rear-sprocket').value = previousData.rearSprocket || '';
-            document.getElementById('swingarm-length').value = previousData.swingarmLength || '';
-            document.getElementById('front-tire').value = previousData.frontTire || '';
-            document.getElementById('rear-tire').value = previousData.rearTire || '';
-            document.getElementById('front-pressure').value = previousData.frontPressure || '';
-            document.getElementById('rear-pressure').value = previousData.rearPressure || '';
-            document.getElementById('rake').value = previousData.rake || '';
-            document.getElementById('trail').value = previousData.trail || '';
-            
+            copySessionData(previousData);
             alert(`Settings copied from ${sessionNames[previousSession]}!`);
+            return;
         } else {
             alert(`No data found for ${sessionNames[previousSession]}`);
+            return;
         }
-    } else {
-        alert('No previous session to copy from!');
     }
+
+    // No previous session in current event, try to get most recent session from any event
+    try {
+        const response = await apiCall(`get-most-recent-session?motorcycleId=${currentMotorcycle.id}&currentEventId=${currentEvent}`);
+
+        if (response.success && response.session) {
+            copySessionData(response.session);
+            alert(`Settings copied from most recent session:\n${response.session.eventName} - ${response.session.sessionType}\n(${new Date(response.session.eventDate).toLocaleDateString()})`);
+        } else {
+            alert('No previous sessions found for this motorcycle across any events.');
+        }
+    } catch (error) {
+        console.error('Error fetching most recent session:', error);
+        alert('Failed to fetch previous session data. Please try again.');
+    }
+}
+
+// Helper function to copy session data to form fields
+function copySessionData(sessionData) {
+    // Copy all setup data but not notes/feedback
+    document.getElementById('front-spring').value = sessionData.frontSpring || '';
+    document.getElementById('front-preload').value = sessionData.frontPreload || '';
+    document.getElementById('front-compression').value = sessionData.frontCompression || '';
+    document.getElementById('front-rebound').value = sessionData.frontRebound || '';
+    document.getElementById('rear-spring').value = sessionData.rearSpring || '';
+    document.getElementById('rear-preload').value = sessionData.rearPreload || '';
+    document.getElementById('rear-compression').value = sessionData.rearCompression || '';
+    document.getElementById('rear-rebound').value = sessionData.rearRebound || '';
+
+    // Copy geometry data
+    document.getElementById('front-ride-height').value = sessionData.frontRideHeight || '';
+    document.getElementById('rear-ride-height').value = sessionData.rearRideHeight || '';
+    document.getElementById('front-sag').value = sessionData.frontSag || '';
+    document.getElementById('rear-sag').value = sessionData.rearSag || '';
+    document.getElementById('swingarm-angle').value = sessionData.swingarmAngle || '';
+
+    document.getElementById('front-sprocket').value = sessionData.frontSprocket || '';
+    document.getElementById('rear-sprocket').value = sessionData.rearSprocket || '';
+    document.getElementById('swingarm-length').value = sessionData.swingarmLength || '';
+    document.getElementById('front-tire').value = sessionData.frontTire || '';
+    document.getElementById('rear-tire').value = sessionData.rearTire || '';
+    document.getElementById('front-pressure').value = sessionData.frontPressure || '';
+    document.getElementById('rear-pressure').value = sessionData.rearPressure || '';
+    document.getElementById('rake').value = sessionData.rake || '';
+    document.getElementById('trail').value = sessionData.trail || '';
 }
 
 // Clear session
