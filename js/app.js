@@ -243,6 +243,11 @@ async function saveAccountSettings() {
             updateEventSeriesDropdown();
             updateEventDropdown(); // Refresh home page event dropdown with new filtering
 
+            // Also update the series dropdown in events.js to reflect user's series preferences
+            if (typeof updateSeriesDropdown === 'function') {
+                updateSeriesDropdown();
+            }
+
             alert('Account information saved!');
         }
     } catch (error) {

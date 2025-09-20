@@ -27,29 +27,46 @@ function updateSeriesDropdown() {
 
     select.innerHTML = '<option value="">Select Series...</option>';
 
-    // Use centralized race series data if available, otherwise fall back to existing data
+    // Get user's selected race series from settings
+    const userSelectedSeries = (typeof settings !== 'undefined' && settings.userRaceSeries) || [];
+
+    // If user has selected specific series, only show those
     let availableSeries = [];
-    if (window.raceSeriesData && window.raceSeriesData.length > 0) {
-        // Use centralized race series (only active ones)
-        availableSeries = window.raceSeriesData
-            .filter(series => series.is_active)
-            .map(series => series.name);
+    if (userSelectedSeries.length > 0) {
+        availableSeries = userSelectedSeries;
     } else {
-        // Fallback to predefined series for backwards compatibility
-        availableSeries = [
-            'MotoAmerica', 'WERA', 'CMRA', 'AFM', 'American Flat Track', 'CRA', 'NESBA',
-            'LRRS', 'CCS', 'WMRRA', 'Other'
-        ];
+        // If no user preferences set, show all available series
+        if (window.raceSeriesData && window.raceSeriesData.length > 0) {
+            // Use centralized race series (only active ones)
+            availableSeries = window.raceSeriesData
+                .filter(series => series.is_active)
+                .map(series => series.name);
+        } else {
+            // Fallback to predefined series for backwards compatibility
+            availableSeries = [
+                'MotoAmerica', 'WERA', 'CMRA', 'AFM', 'American Flat Track', 'CRA', 'NESBA',
+                'LRRS', 'CCS', 'WMRRA', 'Other'
+            ];
+        }
     }
 
     const allSeries = [...new Set([...raceSeries, ...availableSeries])].sort();
 
-    allSeries.forEach(series => {
+    if (allSeries.length === 0 && userSelectedSeries.length === 0) {
+        // Show message to configure race series
         const option = document.createElement('option');
-        option.value = series;
-        option.textContent = series;
+        option.value = '';
+        option.textContent = 'Configure race series in Settings first';
+        option.disabled = true;
         select.appendChild(option);
-    });
+    } else {
+        allSeries.forEach(series => {
+            const option = document.createElement('option');
+            option.value = series;
+            option.textContent = series;
+            select.appendChild(option);
+        });
+    }
 
     // Restore previous selection if it exists
     if (currentSeries && allSeries.includes(currentSeries)) {
