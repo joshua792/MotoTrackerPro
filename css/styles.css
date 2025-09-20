@@ -270,7 +270,7 @@ body {
 .track-map {
     width: 100%;
     height: auto;
-    max-height: 400px;
+    max-height: 480px; /* Increased from 400px to use more available space */
     border-radius: 8px;
     border: 1px solid #ddd;
 }
