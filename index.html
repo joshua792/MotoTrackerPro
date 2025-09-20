@@ -49,18 +49,113 @@
             </div>
         </div>
 
-        <!-- Welcome message for unauthenticated users -->
-        <div id="welcome-message" style="display: none; text-align: center; padding: 60px 20px; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #2c5aa0; margin-bottom: 20px;">Welcome to MotoSetup Pro</h1>
-            <p style="font-size: 18px; color: #666; margin-bottom: 30px;">
-                Professional motorcycle race setup tracking and analysis tool for riders and teams.
-            </p>
-            <p style="color: #888; margin-bottom: 30px;">
-                Track your motorcycle setups, analyze session data, and optimize your performance across different tracks and conditions.
-            </p>
-            <div style="margin-top: 40px;">
-                <button class="btn btn-primary" onclick="showAuthModal('login')" style="margin-right: 10px; padding: 12px 24px; font-size: 16px;">Login to Your Account</button>
-                <button class="btn btn-secondary" onclick="showAuthModal('register')" style="padding: 12px 24px; font-size: 16px;">Create New Account</button>
+        <!-- Landing Page for unauthenticated users -->
+        <div id="welcome-message" style="display: none;">
+            <!-- Hero Section -->
+            <div style="background: linear-gradient(135deg, #2c5aa0 0%, #1e3a5f 100%); color: white; padding: 80px 20px; text-align: center;">
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <h1 style="font-size: 3.5em; margin-bottom: 20px; font-weight: 700;">MotoSetup Pro</h1>
+                    <p style="font-size: 1.4em; margin-bottom: 30px; opacity: 0.9;">
+                        The Professional Motorcycle Race Setup Tracking & AI Analysis Platform
+                    </p>
+                    <p style="font-size: 1.1em; margin-bottom: 40px; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        Stop guessing with your setup. Track every adjustment, analyze your data with AI, and get personalized recommendations to find speed on every track.
+                    </p>
+                    <div style="margin-top: 40px;">
+                        <button class="btn btn-success" onclick="showAuthModal('register')" style="margin-right: 15px; padding: 15px 30px; font-size: 18px; font-weight: 600;">Start Free Trial</button>
+                        <button class="btn btn-outline" onclick="showAuthModal('login')" style="padding: 15px 30px; font-size: 18px; background: transparent; border: 2px solid white; color: white;">Login</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div style="padding: 80px 20px; background: #f8f9fa;">
+                <div style="max-width: 1200px; margin: 0 auto;">
+                    <h2 style="text-align: center; font-size: 2.5em; margin-bottom: 60px; color: #2c5aa0;">Why Pro Riders Choose MotoSetup Pro</h2>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; margin-bottom: 60px;">
+                        <!-- AI Analysis Feature -->
+                        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="background: linear-gradient(135deg, #ff6b6b, #ff8e53); color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px;">🤖</div>
+                            <h3 style="color: #2c5aa0; margin-bottom: 15px; font-size: 1.5em;">AI Setup Analysis</h3>
+                            <p style="color: #666; line-height: 1.6;">
+                                Upload your RaceStudio3 data and get intelligent setup recommendations. Our AI analyzes your lap times, feedback, and setup changes to suggest optimal adjustments for your riding style and track conditions.
+                            </p>
+                        </div>
+
+                        <!-- Setup Tracking -->
+                        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="background: linear-gradient(135deg, #4ecdc4, #44a08d); color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px;">📊</div>
+                            <h3 style="color: #2c5aa0; margin-bottom: 15px; font-size: 1.5em;">Comprehensive Setup Tracking</h3>
+                            <p style="color: #666; line-height: 1.6;">
+                                Track suspension settings, tire pressures, gearing, geometry, and weather conditions. Copy settings from previous sessions and track what changes work at different tracks.
+                            </p>
+                        </div>
+
+                        <!-- Team Collaboration -->
+                        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px;">👥</div>
+                            <h3 style="color: #2c5aa0; margin-bottom: 15px; font-size: 1.5em;">Team Collaboration</h3>
+                            <p style="color: #666; line-height: 1.6;">
+                                Share setups and data with your team. Invite crew members, compare notes, and build a knowledge base of what works for your bikes and riding style.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Benefits Section -->
+            <div style="padding: 80px 20px; background: white;">
+                <div style="max-width: 1000px; margin: 0 auto; text-align: center;">
+                    <h2 style="font-size: 2.5em; margin-bottom: 40px; color: #2c5aa0;">Stop Losing Seconds to Poor Setup</h2>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-bottom: 50px;">
+                        <div style="padding: 20px;">
+                            <h4 style="color: #2c5aa0; margin-bottom: 10px;">📈 Find More Speed</h4>
+                            <p style="color: #666;">AI-powered recommendations help you find the optimal setup faster than trial and error.</p>
+                        </div>
+                        <div style="padding: 20px;">
+                            <h4 style="color: #2c5aa0; margin-bottom: 10px;">⏱️ Save Time</h4>
+                            <p style="color: #666;">Start each weekend with your proven baseline setup instead of starting from scratch.</p>
+                        </div>
+                        <div style="padding: 20px;">
+                            <h4 style="color: #2c5aa0; margin-bottom: 10px;">📱 Always Available</h4>
+                            <p style="color: #666;">Access your setup data from any device, anywhere. Perfect for traveling to different tracks.</p>
+                        </div>
+                        <div style="padding: 20px;">
+                            <h4 style="color: #2c5aa0; margin-bottom: 10px;">🏆 Proven Results</h4>
+                            <p style="color: #666;">Used by professional riders and teams to optimize performance across multiple race series.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing Teaser -->
+            <div style="padding: 60px 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; text-align: center;">
+                <div style="max-width: 600px; margin: 0 auto;">
+                    <h2 style="font-size: 2.2em; margin-bottom: 20px;">Start Your Free Trial Today</h2>
+                    <p style="font-size: 1.2em; margin-bottom: 30px; opacity: 0.9;">
+                        14-day free trial includes AI analysis, unlimited setups, and team collaboration. No credit card required.
+                    </p>
+                    <button class="btn btn-light" onclick="showAuthModal('register')" style="background: white; color: #2c5aa0; padding: 15px 30px; font-size: 18px; font-weight: 600; border: none;">
+                        Create Free Account
+                    </button>
+                    <p style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
+                        Already have an account? <a href="#" onclick="showAuthModal('login')" style="color: white; text-decoration: underline;">Login here</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="padding: 40px 20px; background: #2c3e50; color: white; text-align: center;">
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <p style="margin-bottom: 20px; font-size: 16px; opacity: 0.8;">
+                        Trusted by riders in MotoAmerica, WERA, CMRA, AFM, and racing organizations worldwide.
+                    </p>
+                    <p style="margin: 0; opacity: 0.6;">
+                        &copy; 2024 MotoSetup Pro. Professional Motorcycle Setup Tracking & Analysis.
+                    </p>
+                </div>
             </div>
         </div>
 
