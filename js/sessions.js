@@ -270,23 +270,22 @@ async function copyFromPrevious() {
     const sessions = ['practice1', 'qualifying1', 'qualifying2', 'race1', 'warmup', 'race2'];
     const currentIndex = sessions.indexOf(currentSession);
 
+    // First, try to copy from previous session in current event (if not Practice 1)
     if (currentIndex > 0) {
-        // Try to copy from previous session in current event first
         const previousSession = sessions[currentIndex - 1];
         const previousKey = `${currentEvent}_${currentMotorcycle.id}_${previousSession}`;
         const previousData = sessionData[previousKey];
 
-        if (previousData) {
+        // Check if session exists AND has actual setup data
+        if (previousData && hasSetupData(previousData)) {
             copySessionData(previousData);
             alert(`Settings copied from ${sessionNames[previousSession]}!`);
             return;
-        } else {
-            alert(`No data found for ${sessionNames[previousSession]}`);
-            return;
         }
+        // If no data found or empty data in current event, fall through to cross-event search
     }
 
-    // No previous session in current event, try to get most recent session from any event
+    // No previous session in current event OR in Practice 1, try to get most recent session from any event
     try {
         const response = await apiCall(`get-most-recent-session?motorcycleId=${currentMotorcycle.id}&currentEventId=${currentEvent}`);
 
@@ -300,6 +299,22 @@ async function copyFromPrevious() {
         console.error('Error fetching most recent session:', error);
         alert('Failed to fetch previous session data. Please try again.');
     }
+}
+
+// Helper function to check if session data has meaningful setup information
+function hasSetupData(sessionData) {
+    // Check if any of the key setup fields have values
+    const setupFields = [
+        'frontSpring', 'frontPreload', 'frontCompression', 'frontRebound',
+        'rearSpring', 'rearPreload', 'rearCompression', 'rearRebound',
+        'frontSprocket', 'rearSprocket', 'frontTire', 'rearTire',
+        'frontPressure', 'rearPressure'
+    ];
+
+    return setupFields.some(field =>
+        sessionData[field] &&
+        sessionData[field].toString().trim() !== ''
+    );
 }
 
 // Helper function to copy session data to form fields
